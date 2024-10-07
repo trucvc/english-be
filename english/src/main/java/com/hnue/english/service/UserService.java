@@ -16,6 +16,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.DateTimeException;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -25,6 +27,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtil jwtTokenUtil;
     private final AuthenticationManager authenticationManager;
+    private final TokenBlacklistService tokenBlacklistService;
 
     public void createUser(UserDTO userDTO) throws DataNotFoundException{
         String email = userDTO.getEmail();
@@ -40,6 +43,33 @@ public class UserService {
         user.setPassword(pass);
 
         userReponsitory.save(user);
+    }
+
+    public List<User> getAllUsers(){
+        return userReponsitory.findAll();
+    }
+
+    public Optional<User> getUser(int id){
+        return userReponsitory.findById(id);
+    }
+
+    public User updateUser(int id, User theUser){
+        User user = userReponsitory.findById(id).orElseThrow(() -> new DateTimeException("Không tìm thấy user với id: " + id));
+
+        user.setPassword(theUser.getPassword());
+        user.setFullName(theUser.getFullName());
+        user.setSubscriptionPlan(theUser.getSubscriptionPlan());
+        user.setSubscriptionStartDate(theUser.getSubscriptionStartDate());
+        user.setSubscriptionEndDate(theUser.getSubscriptionEndDate());
+        user.setRole(theUser.getRole());
+        user.setPaid(theUser.getPaid());
+
+        return userReponsitory.save(user);
+    }
+
+    public void deleteUser(int id){
+        User user = userReponsitory.findById(id).orElseThrow(() -> new DateTimeException("Không tìm thấy user với id: " + id));
+        userReponsitory.delete(user);
     }
 
     public String login(String email, String password) throws Exception{
@@ -61,12 +91,17 @@ public class UserService {
         return jwtTokenUtil.generateToken(existingUser);
     }
 
+    public void logout(String token){
+        tokenBlacklistService.blacklistToken(token);
+    }
+
     public String refresh(String token) throws Exception{
         String email = jwtTokenUtil.extractEmail(token);
         Optional<User> user = userReponsitory.findByEmail(email);
         if (user.isEmpty()){
             throw new RuntimeException("Không thể tạo lại token");
         }else {
+            tokenBlacklistService.blacklistToken(token);
             User u = new User();
             u.setEmail(email);
             return jwtTokenUtil.generateToken(u);

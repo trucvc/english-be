@@ -32,6 +32,9 @@ public class User implements UserDetails{
     @Column(name = "password")
     private String password;
 
+    @Column(name = "full_name")
+    private String fullName;
+
     @Column(name = "subscription_plan")
     private String subscriptionPlan;
 
@@ -44,17 +47,22 @@ public class User implements UserDetails{
     @Column(name = "role")
     private String role;
 
+    @Column(name = "paid")
+    private int paid;
+
     public User(){
 
     }
 
-    public User(String email, String password, String subscriptionPlan, Date subscriptionStartDate, Date subscriptionEndDate, String role) {
+    public User(String email, String password, String fullName, String subscriptionPlan, Date subscriptionStartDate, Date subscriptionEndDate, String role, int paid) {
         this.email = email;
         this.password = password;
+        this.fullName = fullName;
         this.subscriptionPlan = subscriptionPlan;
         this.subscriptionStartDate = subscriptionStartDate;
         this.subscriptionEndDate = subscriptionEndDate;
         this.role = role;
+        this.paid = paid;
     }
 
     @Override

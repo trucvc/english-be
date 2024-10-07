@@ -3,7 +3,9 @@ package com.hnue.english.controller;
 import com.hnue.english.component.JwtTokenUtil;
 import com.hnue.english.dto.UserDTO;
 import com.hnue.english.service.UserService;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +52,7 @@ public class UserController {
     }
 
     @GetMapping("/refresh")
-    public ResponseEntity<String> refresh(HttpServletRequest request){
+    public ResponseEntity<String> refresh(HttpServletRequest request, HttpServletResponse response){
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")){
             return ResponseEntity.badRequest().body("Không thể tạo mới token");
@@ -58,9 +60,21 @@ public class UserController {
         String token = authHeader.substring(7);
         try {
             String newToken = userService.refresh(token);
+            response.setHeader("Authorization", "Bearer " + newToken);
             return ResponseEntity.ok(newToken);
         }catch (Exception e){
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @GetMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request){
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")){
+            return ResponseEntity.badRequest().body("Token không hợp lệ");
+        }
+        String token = authHeader.substring(7);
+        userService.logout(token);
+        return ResponseEntity.ok("Đăng xuất thành công");
     }
 }

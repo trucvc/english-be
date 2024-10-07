@@ -5,7 +5,6 @@ CREATE TABLE `User` (
     `user_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'Khóa chính để xác định duy nhất mỗi người dùng.',
     `email` VARCHAR(255) NOT NULL UNIQUE COMMENT 'Địa chỉ email của người dùng, thường dùng để đăng nhập.',
     `password` VARCHAR(255) NOT NULL COMMENT 'Mật khẩu đã được mã hóa để bảo mật.',
-    `full_name` VARCHAR(255) NOT NULL,
     `enable` TINYINT(1) DEFAULT 1,
     `subscription_plan` ENUM('none', '6_months', '1_year', '3_years') DEFAULT 'none' COMMENT 'Gói dịch vụ mà người dùng đã đăng ký.',
     `subscription_start_date` DATETIME COMMENT 'Ngày bắt đầu gói dịch vụ.',
@@ -80,14 +79,4 @@ CREATE TABLE `Folder_Vocabulary` (
     PRIMARY KEY(`folder_id`, `vocab_id`),
     FOREIGN KEY (`folder_id`) REFERENCES `Folder`(`folder_id`) ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (`vocab_id`) REFERENCES `Vocabulary`(`vocab_id`) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-CREATE TABLE `Form_Submission` (
-    `submission_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'Khóa chính định danh mỗi lần gửi biểu mẫu.',
-    `user_id` INTEGER NOT NULL COMMENT 'Khóa ngoại tham chiếu đến bảng User.',
-    `form_type` TINYINT(1) NOT NULL COMMENT 'Loại biểu mẫu: 0 = đánh giá, 1 = gửi lỗi.',
-    `content` TEXT NOT NULL COMMENT 'Nội dung của biểu mẫu.',
-    `status` TINYINT(1) DEFAULT 0 COMMENT 'Trạng thái xử lý của biểu mẫu: 0 = chưa xử lý, 1 = đã xử lý.',
-    PRIMARY KEY(`submission_id`),
-    FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`) ON UPDATE CASCADE ON DELETE CASCADE
 );

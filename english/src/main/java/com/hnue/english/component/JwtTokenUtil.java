@@ -1,6 +1,7 @@
 package com.hnue.english.component;
 
 import com.hnue.english.model.User;
+import com.hnue.english.service.TokenBlacklistService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -22,6 +23,7 @@ import java.util.function.Function;
 @Component
 @RequiredArgsConstructor
 public class JwtTokenUtil {
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Value("${jwt.expiration}")
     private long expiration;
@@ -83,6 +85,9 @@ public class JwtTokenUtil {
     }
 
     public boolean validateToken(String token, UserDetails userDetails){
+        if (tokenBlacklistService.isTokenBlacklist(token)){
+            return false;
+        }
         String email = extractEmail(token);
         return (email.equals(userDetails.getUsername())
                 && !isTokenExpired(token));
