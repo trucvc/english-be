@@ -7,7 +7,9 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-public interface CourseReponsitory extends JpaRepository<Course, Integer> {
-    @Query("SELECT c FROM Course c JOIN FETCH c.topics WHERE c.id = :id")
+public interface CourseRepository extends JpaRepository<Course, Integer> {
+    @Query("SELECT c FROM Course c LEFT JOIN FETCH c.topics WHERE c.id = :id")
     Optional<Course> getCourseWithTopic(@Param("id") int id);
+
+    boolean existsByCourseName(String courseName);
 }

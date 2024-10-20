@@ -1,25 +1,28 @@
 package com.hnue.english.service;
 
+import com.hnue.english.dto.CourseDTO;
 import com.hnue.english.model.Course;
 import com.hnue.english.model.Topic;
-import com.hnue.english.reponsitory.CourseReponsitory;
+import com.hnue.english.reponsitory.CourseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.DateTimeException;
 import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class CourseService {
-    private final CourseReponsitory courseReponsitory;
+    private final CourseRepository courseRepository;
 
-    public void createCourse(Course theCourse){
-        courseReponsitory.save(theCourse);
+    public void createCourse(CourseDTO courseDTO){
+        Course course = new Course();
+        course.setCourseName(courseDTO.getCourseName());
+        course.setDescription(courseDTO.getDescription());
+        courseRepository.save(course);
     }
 
     public Course getCourse(int id){
-        Course course = courseReponsitory.getCourseWithTopic(id).orElseThrow(()-> new DateTimeException("Không tồn tại khóa học với id: "+id));
+        Course course = courseRepository.getCourseWithTopic(id).orElseThrow(()-> new RuntimeException("Không tồn tại khóa học với id: "+id));
 
         List<Topic> theTopic = new ArrayList<>(course.getTopics());
         theTopic.sort(Comparator.comparing(Topic::getOrder));
@@ -29,23 +32,32 @@ public class CourseService {
     }
 
     public List<Course> getAllCourse(){
-        return courseReponsitory.findAll();
+        return courseRepository.findAll();
     }
 
-    public Course updateCourse(int id, Course theCourse){
-        Course course = courseReponsitory.findById(id).orElseThrow(() -> new DateTimeException("Không tồn tại khóa học với id: "+id));
+    public Course updateCourse(int id, CourseDTO courseDTO){
+        Course course = courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tồn tại khóa học với id: "+id));
 
-        course.setCourseName(theCourse.getCourseName());
-        course.setDescription(theCourse.getDescription());
+        course.setCourseName(courseDTO.getCourseName());
+        course.setDescription(courseDTO.getDescription());
 
-        return courseReponsitory.save(course);
+        return courseRepository.save(course);
     }
 
     public void deleteCourse(int id){
-        Course course = courseReponsitory.findById(id).orElseThrow(() -> new DateTimeException("Không tồn tại khóa học với id: "+id));
+        Course course = courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tồn tại khóa học với id: "+id));
         for (Topic theTopic : course.getTopics()){
             theTopic.setCourse(null);
         }
-        courseReponsitory.delete(course);
+        courseRepository.delete(course);
+    }
+
+    public boolean preUpdateCourse(int id, String courseName){
+        Course course = courseRepository.getCourseWithTopic(id).orElseThrow(() -> new RuntimeException("Không tồn tại khóa học với id: "+id));
+        return course.getCourseName().equals(courseName);
+    }
+
+    public boolean existsByCourseName(String courseName){
+        return courseRepository.existsByCourseName(courseName);
     }
 }

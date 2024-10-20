@@ -1,8 +1,10 @@
 package com.hnue.english.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,12 +25,9 @@ public class User implements UserDetails{
     @Column(name = "user_id")
     private int userId;
 
-    @Email(message = "Phải là email")
-    @NotBlank(message = "Không được để trống email")
     @Column(name = "email")
     private String email;
 
-    @NotBlank(message = "Không được để trống mật khẩu")
     @Column(name = "password")
     private String password;
 
@@ -50,6 +49,21 @@ public class User implements UserDetails{
     @Column(name = "paid")
     private int paid;
 
+    @JsonManagedReference
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<UserProgress> userProgresses;
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Folder> folders;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Subscription subscription;
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<FormSubmission> formSubmissions;
+
     public User(){
 
     }
@@ -68,7 +82,7 @@ public class User implements UserDetails{
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_"+getRole()));
+        authorities.add(new SimpleGrantedAuthority(getRole()));
         return authorities;
     }
 
@@ -95,5 +109,29 @@ public class User implements UserDetails{
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public void addUserProgress(UserProgress theUserProgress){
+        if (userProgresses == null){
+            userProgresses = new ArrayList<>();
+        }
+        userProgresses.add(theUserProgress);
+        theUserProgress.setUser(this);
+    }
+
+    public void addFolder(Folder theFolder){
+        if (folders == null){
+            folders = new ArrayList<>();
+        }
+        folders.add(theFolder);
+        theFolder.setUser(this);
+    }
+
+    public void addFormSubmission(FormSubmission theFormSubmission){
+        if (formSubmissions == null){
+            formSubmissions = new ArrayList<>();
+        }
+        formSubmissions.add(theFormSubmission);
+        theFormSubmission.setUser(this);
     }
 }
