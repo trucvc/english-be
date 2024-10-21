@@ -26,7 +26,7 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final TokenBlacklistService tokenBlacklistService;
 
-    public void createUser(UserDTO userDTO){
+    public User createUser(UserDTO userDTO){
         User user = new User();
         user.setEmail(userDTO.getEmail());
         user.setPassword(userDTO.getPassword());
@@ -37,7 +37,7 @@ public class UserService {
         user.setRole("ROLE_"+userDTO.getRole());
         String pass = passwordEncoder.encode(user.getPassword());
         user.setPassword(pass);
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
     public List<User> getAllUsers(){

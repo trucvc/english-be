@@ -14,11 +14,11 @@ import java.util.*;
 public class CourseService {
     private final CourseRepository courseRepository;
 
-    public void createCourse(CourseDTO courseDTO){
+    public Course createCourse(CourseDTO courseDTO){
         Course course = new Course();
         course.setCourseName(courseDTO.getCourseName());
         course.setDescription(courseDTO.getDescription());
-        courseRepository.save(course);
+        return courseRepository.save(course);
     }
 
     public Course getCourse(int id){

@@ -1,21 +1,15 @@
 package com.hnue.english.controller;
 
-import com.hnue.english.component.JwtTokenUtil;
 import com.hnue.english.dto.UserDTO;
 import com.hnue.english.model.User;
 import com.hnue.english.response.ApiResponse;
 import com.hnue.english.response.LoginResponse;
 import com.hnue.english.service.UserService;
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
@@ -49,8 +43,8 @@ public class UserController {
                 .subscriptionStartDate(subscriptionStartDate).subscriptionEndDate(subscriptionEndDate)
                 .role(role)
                 .build();
-        userService.createUser(userDTO);
-        return ResponseEntity.status(201).body(ApiResponse.success(201, "", userDTO));
+        User u = userService.createUser(userDTO);
+        return ResponseEntity.status(201).body(ApiResponse.success(201, "", u));
     }
 
     @GetMapping("/{id}")

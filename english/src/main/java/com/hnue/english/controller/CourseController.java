@@ -25,8 +25,8 @@ public class CourseController {
                 .courseName(courseName)
                 .description(description)
                 .build();
-        courseService.createCourse(courseDTO);
-        return ResponseEntity.status(201).body(ApiResponse.success(201, "", courseDTO));
+        Course c = courseService.createCourse(courseDTO);
+        return ResponseEntity.status(201).body(ApiResponse.success(201, "", c));
     }
 
     @GetMapping("/{id}")

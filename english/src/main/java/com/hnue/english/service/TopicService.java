@@ -1,5 +1,6 @@
 package com.hnue.english.service;
 
+import com.hnue.english.dto.TopicDTO;
 import com.hnue.english.model.Topic;
 import com.hnue.english.model.Vocabulary;
 import com.hnue.english.reponsitory.TopicRepository;
@@ -14,8 +15,12 @@ import java.util.List;
 public class TopicService {
     private final TopicRepository topicRepository;
 
-    public void createTopic(Topic theTopic){
-        topicRepository.save(theTopic);
+    public Topic createTopic(TopicDTO topicDTO){
+        Topic topic = new Topic();
+        topic.setTopicName(topicDTO.getTopicName());
+        topic.setDescription(topicDTO.getDescription());
+        topic.setOrder(topic.getOrder());
+        return topicRepository.save(topic);
     }
 
     public Topic getTopic(int id){
@@ -27,11 +32,11 @@ public class TopicService {
         return topicRepository.findAll();
     }
 
-    public Topic updateTopic(int id, Topic theTopic){
+    public Topic updateTopic(int id, TopicDTO topicDTO){
         Topic topic = topicRepository.getTopicWithVocabulary(id).orElseThrow(()-> new RuntimeException("Không tồn tại chủ đề với id: "+id));
-        topic.setTopicName(theTopic.getTopicName());
-        topic.setDescription(theTopic.getDescription());
-        topic.setOrder(theTopic.getOrder());
+        topic.setTopicName(topicDTO.getTopicName());
+        topic.setDescription(topicDTO.getDescription());
+        topic.setOrder(topicDTO.getOrder());
         return topicRepository.save(topic);
     }
 
@@ -41,5 +46,14 @@ public class TopicService {
             vocabulary.setTopic(null);
         }
         topicRepository.delete(topic);
+    }
+
+    public boolean preUpdateTopic(int id, String topicName){
+        Topic topic = topicRepository.getTopicWithVocabulary(id).orElseThrow(()-> new RuntimeException("Không tồn tại chủ đề với id: "+id));
+        return topic.getTopicName().equals(topicName);
+    }
+
+    public boolean existsByTopicName(String topicName){
+        return topicRepository.existsByTopicName(topicName);
     }
 }
