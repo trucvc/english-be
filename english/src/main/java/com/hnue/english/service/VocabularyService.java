@@ -1,5 +1,6 @@
 package com.hnue.english.service;
 
+import com.hnue.english.dto.VocabDTO;
 import com.hnue.english.model.Vocabulary;
 import com.hnue.english.reponsitory.VocabularyRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,8 +14,9 @@ import java.util.List;
 public class VocabularyService {
     private final VocabularyRepository vocabularyRepository;
 
-    public void createVocab(Vocabulary theVocabulary){
-        vocabularyRepository.save(theVocabulary);
+    public Vocabulary createVocab(VocabDTO vocabDTO){
+        Vocabulary vocabulary = new Vocabulary(vocabDTO.getWord(), vocabDTO.getMeaning(), vocabDTO.getExampleSentence(), vocabDTO.getPronunciation());
+        return vocabularyRepository.save(vocabulary);
     }
 
     public Vocabulary getVocab(int id){
@@ -26,17 +28,26 @@ public class VocabularyService {
         return vocabularyRepository.findAll();
     }
 
-    public Vocabulary updateVocab(int id, Vocabulary theVocab){
+    public Vocabulary updateVocab(int id, VocabDTO vocabDTO){
         Vocabulary vocabulary = vocabularyRepository.findById(id).orElseThrow(()-> new RuntimeException("Không tồn tại từ vựng với id: "+id));
-        vocabulary.setWord(theVocab.getWord());
-        vocabulary.setMeaning(theVocab.getMeaning());
-        vocabulary.setPronunciation(theVocab.getPronunciation());
-        vocabulary.setExampleSentence(theVocab.getExampleSentence());
+        vocabulary.setWord(vocabDTO.getWord());
+        vocabulary.setMeaning(vocabDTO.getMeaning());
+        vocabulary.setPronunciation(vocabDTO.getPronunciation());
+        vocabulary.setExampleSentence(vocabDTO.getExampleSentence());
         return vocabularyRepository.save(vocabulary);
     }
 
     public void deleteVocab(int id){
         Vocabulary vocabulary = vocabularyRepository.findById(id).orElseThrow(()-> new RuntimeException("Không tồn tại từ vựng với id: "+id));
         vocabularyRepository.delete(vocabulary);
+    }
+
+    public boolean preUpdateVocab(int id, String word){
+        Vocabulary vocabulary = vocabularyRepository.findById(id).orElseThrow(()-> new RuntimeException("Không tồn tại từ vựng với id: "+id));
+        return vocabulary.getWord().equals(word);
+    }
+
+    public boolean existsByWord(String word){
+        return vocabularyRepository.existsByWord(word);
     }
 }

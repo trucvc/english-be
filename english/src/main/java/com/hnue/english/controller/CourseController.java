@@ -21,6 +21,9 @@ public class CourseController {
         if (courseName.trim().isEmpty() || description.trim().isEmpty()){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
         }
+        if (courseService.existsByCourseName(courseName)){
+            return ResponseEntity.status(400).body(ApiResponse.error(400, "Đã tồn tại tên khóa học này", "Bad Request"));
+        }
         CourseDTO courseDTO = CourseDTO.builder()
                 .courseName(courseName)
                 .description(description)

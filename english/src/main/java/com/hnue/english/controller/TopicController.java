@@ -21,6 +21,9 @@ public class TopicController {
         if (topicName.trim().isEmpty() || order == 0){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
         }
+        if (topicService.existsByTopicName(topicName)){
+            return ResponseEntity.status(400).body(ApiResponse.error(400, "Đã tồn tại tên chủ đề này", "Bad Request"));
+        }
         TopicDTO topicDTO = TopicDTO.builder()
                 .topicName(topicName).description(description).order(order).build();
         Topic t = topicService.createTopic(topicDTO);
