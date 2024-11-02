@@ -2,7 +2,6 @@ package com.hnue.english.controller;
 
 import com.hnue.english.dto.CourseDTO;
 import com.hnue.english.model.Course;
-import com.hnue.english.model.User;
 import com.hnue.english.response.ApiResponse;
 import com.hnue.english.service.CourseService;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +26,9 @@ public class CourseController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<?>> createCourse(@RequestParam String courseName, @RequestParam String description){
-        if (courseName.isEmpty() || description.isEmpty()){
+    public ResponseEntity<ApiResponse<?>> createCourse(@RequestParam String courseName, @RequestParam String description,
+                                                       @RequestParam String courseTarget){
+        if (courseName.isEmpty() || description.isEmpty() || courseTarget.isEmpty()){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
         }
         if (courseService.existsByCourseName(courseName)){
@@ -37,6 +37,7 @@ public class CourseController {
         CourseDTO courseDTO = CourseDTO.builder()
                 .courseName(courseName)
                 .description(description)
+                .courseTarget(courseTarget)
                 .build();
         Course c = courseService.createCourse(courseDTO);
         return ResponseEntity.status(201).body(ApiResponse.success(201, "", c));
@@ -73,9 +74,10 @@ public class CourseController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> updateCourse(@PathVariable int id, @RequestParam String courseName, @RequestParam String description){
+    public ResponseEntity<ApiResponse<?>> updateCourse(@PathVariable int id, @RequestParam String courseName,
+                                                       @RequestParam String description, @RequestParam String courseTarget){
         try {
-            if (courseName.isEmpty() || description.isEmpty()){
+            if (courseName.isEmpty() || description.isEmpty() || courseTarget.isEmpty()){
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
             }
             if (!courseService.preUpdateCourse(id, courseName)){
@@ -86,6 +88,7 @@ public class CourseController {
             CourseDTO courseDTO = CourseDTO.builder()
                     .courseName(courseName)
                     .description(description)
+                    .courseTarget(courseTarget)
                     .build();
             Course course = courseService.updateCourse(id, courseDTO);
             return ResponseEntity.status(201).body(ApiResponse.success(201, "", course));

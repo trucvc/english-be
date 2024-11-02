@@ -26,7 +26,6 @@ public class TopicService {
         topic.setTopicName(topicDTO.getTopicName());
         topic.setDescription(topicDTO.getDescription());
         topic.setDisplayOrder(topicDTO.getOrder());
-        topic.setContent(topicDTO.getContent());
         topic.setCreatedAt(new Date());
         return topicRepository.save(topic);
     }
@@ -50,7 +49,6 @@ public class TopicService {
         topic.setTopicName(topicDTO.getTopicName());
         topic.setDescription(topicDTO.getDescription());
         topic.setDisplayOrder(topicDTO.getOrder());
-        topic.setContent(topicDTO.getContent());
         topic.setUpdatedAt(new Date());
         return topicRepository.save(topic);
     }

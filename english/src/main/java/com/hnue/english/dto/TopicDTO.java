@@ -14,6 +14,5 @@ public class TopicDTO {
     private String topicName;
     private String description;
     private int order;
-    private String content;
     private MultipartFile image;
 }

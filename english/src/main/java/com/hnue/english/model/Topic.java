@@ -24,9 +24,6 @@ public class Topic {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "content")
-    private String content;
-
     @Column(name = "display_order")
     private int displayOrder;
 
@@ -51,10 +48,9 @@ public class Topic {
 
     }
 
-    public Topic(String topicName, String description, String content, int displayOrder) {
+    public Topic(String topicName, String description, int displayOrder) {
         this.topicName = topicName;
         this.description = description;
-        this.content = content;
         this.displayOrder = displayOrder;
     }
 

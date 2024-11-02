@@ -21,6 +21,7 @@ public class CourseService {
         Course course = new Course();
         course.setCourseName(courseDTO.getCourseName());
         course.setDescription(courseDTO.getDescription());
+        course.setCourseTarget(courseDTO.getCourseTarget());
         course.setCreatedAt(new Date());
         return courseRepository.save(course);
     }
@@ -49,6 +50,7 @@ public class CourseService {
 
         course.setCourseName(courseDTO.getCourseName());
         course.setDescription(courseDTO.getDescription());
+        course.setCourseTarget(courseDTO.getCourseTarget());
         course.setUpdatedAt(new Date());
         return courseRepository.save(course);
     }

@@ -24,6 +24,9 @@ public class Course {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "course_target")
+    private String courseTarget;
+
     @Column(name = "created_at")
     private Date createdAt;
 
@@ -38,9 +41,10 @@ public class Course {
 
     }
 
-    public Course(String courseName, String description) {
+    public Course(String courseName, String description, String courseTarget) {
         this.courseName = courseName;
         this.description = description;
+        this.courseTarget = courseTarget;
     }
 
     public void add(Topic topic){

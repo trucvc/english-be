@@ -21,6 +21,7 @@ CREATE TABLE `Course` (
     `course_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'Khóa chính định danh khóa học.',
     `course_name` VARCHAR(255) NOT NULL COMMENT 'Tên khóa học.',
     `description` TEXT NOT NULL COMMENT 'Mô tả chi tiết về khóa học.',
+    `course_target` VARCHAR(255) COMMENT 'Mục tiêu của khóa học.',
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo bản ghi.',
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật bản ghi.',
     PRIMARY KEY(`course_id`)
@@ -33,7 +34,6 @@ CREATE TABLE `Topic` (
     `description` TEXT COMMENT 'Mô tả chi tiết về chủ đề.',
     `order` INTEGER COMMENT 'Xác định thứ tự của chủ đề trong khóa học.',
     `image` VARCHAR(255) COMMENT 'Đường dẫn đến ảnh đại diện của chủ đề.',
-    `content` TEXT COMMENT 'Nội dung chi tiết về chủ đề.',
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo bản ghi.',
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật bản ghi.',
     PRIMARY KEY(`topic_id`),

@@ -32,8 +32,8 @@ public class TopicController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> createTopic(@RequestParam String topicName, @RequestParam String description,
-                                                      @RequestParam(defaultValue = "0") int order, @RequestParam String content){
-        if (topicName.isEmpty() || description.isEmpty() || content.isEmpty() || order == 0){
+                                                      @RequestParam(defaultValue = "0") int order){
+        if (topicName.isEmpty() || description.isEmpty() || order == 0){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
         }
         List<String> error = new ArrayList<>();
@@ -47,7 +47,7 @@ public class TopicController {
             return ResponseEntity.status(400).body(ApiResponse.error(400, error, "Bad Request"));
         }
         TopicDTO topicDTO = TopicDTO.builder()
-                .topicName(topicName).description(description).order(order).content(content).build();
+                .topicName(topicName).description(description).order(order).build();
         Topic t = topicService.createTopic(topicDTO);
         return ResponseEntity.status(201).body(ApiResponse.success(201, "", t));
     }
@@ -84,9 +84,9 @@ public class TopicController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> updateTopic(@PathVariable int id, @RequestParam String topicName, @RequestParam String description,
-                                                      @RequestParam(defaultValue = "0") int order, @RequestParam String content){
+                                                      @RequestParam(defaultValue = "0") int order){
         try {
-            if (topicName.isEmpty() || description.isEmpty() || content.isEmpty() || order == 0){
+            if (topicName.isEmpty() || description.isEmpty() || order == 0){
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
             }
             if (!topicService.preUpdateTopic(id, topicName)){
@@ -95,7 +95,7 @@ public class TopicController {
                 }
             }
             TopicDTO topicDTO = TopicDTO.builder()
-                    .topicName(topicName).description(description).order(order).content(content).build();
+                    .topicName(topicName).description(description).order(order).build();
             Topic topic = topicService.updateTopic(id, topicDTO);
             return ResponseEntity.status(201).body(ApiResponse.success(201, "", topic));
         } catch (Exception e) {
