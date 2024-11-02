@@ -12,4 +12,6 @@ public interface TopicRepository extends JpaRepository<Topic, Integer> {
     Optional<Topic> getTopicWithVocabulary(@Param("id") int id);
 
     boolean existsByTopicName(String topicName);
+
+    boolean existsByDescription(String description);
 }

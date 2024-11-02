@@ -7,6 +7,9 @@ import com.hnue.english.model.User;
 import com.hnue.english.reponsitory.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.DateTimeException;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,9 +38,10 @@ public class UserService {
         user.setSubscriptionPlan(user.getSubscriptionPlan());
         user.setSubscriptionStartDate(userDTO.getSubscriptionStartDate());
         user.setSubscriptionEndDate(userDTO.getSubscriptionEndDate());
-        user.setRole("ROLE_"+userDTO.getRole());
+        user.setRole("ROLE_"+userDTO.getRole().toUpperCase());
         String pass = passwordEncoder.encode(user.getPassword());
         user.setPassword(pass);
+        user.setCreatedAt(new Date());
         return userRepository.save(user);
     }
 
@@ -48,21 +53,27 @@ public class UserService {
         return userRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + id));
     }
 
+    public Page<User> getUsers(int page, int size){
+        Pageable pageable = PageRequest.of(page, size);
+        return userRepository.findAll(pageable);
+    }
+
     public User getUserByEmail(String email){
         return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Không tìm thấy user với email: " + email));
     }
 
     public User updateUser(int id, UserDTO userDTO){
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + id));
-
-        user.setPassword(userDTO.getPassword());
+        if (!(userDTO.getPassword() == null || userDTO.getPassword().isBlank())){
+            user.setPassword(userDTO.getPassword());
+        }
         user.setFullName(userDTO.getFullName());
         user.setSubscriptionPlan(userDTO.getSubscriptionPlan());
         user.setSubscriptionStartDate(userDTO.getSubscriptionStartDate());
         user.setSubscriptionEndDate(userDTO.getSubscriptionEndDate());
-        user.setRole("ROLE_"+userDTO.getRole());
+        user.setRole("ROLE_"+userDTO.getRole().toUpperCase());
         user.setPaid(userDTO.getPaid());
-
+        user.setUpdatedAt(new Date());
         return userRepository.save(user);
     }
 
@@ -103,7 +114,8 @@ public class UserService {
         user.setEmail(userDTO.getEmail());
         user.setPassword(userDTO.getPassword());
         user.setFullName(userDTO.getFullName());
-        user.setRole("ROLE_user");
+        user.setCreatedAt(new Date());
+        user.setRole("ROLE_USER");
 
         String pass = passwordEncoder.encode(user.getPassword());
         user.setPassword(pass);

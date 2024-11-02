@@ -8,8 +8,11 @@ import com.hnue.english.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
@@ -21,13 +24,19 @@ import java.util.List;
 public class UserController {
     private final UserService userService;
 
+    @InitBinder
+    public void initBinder(WebDataBinder dataBinder) {
+        StringTrimmerEditor stringTrimmerEditor = new StringTrimmerEditor(false);
+        dataBinder.registerCustomEditor(String.class, stringTrimmerEditor);
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<?>> createUser(@RequestParam String email, @RequestParam String password,
                                                      @RequestParam String fullName, @RequestParam(required = false) String subscriptionPlan,
                                                      @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date subscriptionStartDate,
                                                      @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date subscriptionEndDate,
                                                      @RequestParam String role){
-        if (email.trim().isEmpty() || password.trim().isEmpty() || fullName.trim().isEmpty() || role.trim().isEmpty()){
+        if (email.isEmpty() || password.isEmpty() || fullName.isEmpty() || role.isEmpty()){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
         }
         String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
@@ -38,8 +47,8 @@ public class UserController {
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Email này đã tồn tại", "Bad Request"));
         }
         UserDTO userDTO = UserDTO.builder()
-                .email(email.trim()).password(password.trim())
-                .fullName(fullName.trim()).subscriptionPlan(subscriptionPlan)
+                .email(email).password(password)
+                .fullName(fullName).subscriptionPlan(subscriptionPlan)
                 .subscriptionStartDate(subscriptionStartDate).subscriptionEndDate(subscriptionEndDate)
                 .role(role)
                 .build();
@@ -63,21 +72,34 @@ public class UserController {
         return ResponseEntity.status(200).body(ApiResponse.success(200, "", users));
     }
 
+    @GetMapping("/page")
+    public ResponseEntity<ApiResponse<?>> getUsers(@RequestParam(defaultValue = "0") int page,
+                                                   @RequestParam(defaultValue = "1") int size){
+        if (size < 1){
+            return ResponseEntity.status(400).body(ApiResponse.error(400, "size phải lớn hơn 0", "Bad Request"));
+        }
+        Page<User> users = userService.getUsers(page, size);
+        return ResponseEntity.status(200).body(ApiResponse.success(200, "", users));
+    }
+
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> updateUser(@PathVariable int id, @RequestParam String password,
+    public ResponseEntity<ApiResponse<?>> updateUser(@PathVariable int id, @RequestParam(required = false) String password,
                                                      @RequestParam String fullName, @RequestParam(required = false) String subscriptionPlan,
                                                      @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date subscriptionStartDate,
                                                      @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date subscriptionEndDate,
-                                                     @RequestParam String role){
+                                                     @RequestParam String role, @RequestParam(required = false) int paid){
         try {
-            if (password.trim().isEmpty() || fullName.trim().isEmpty() || role.trim().isEmpty()){
+            if (fullName.isEmpty() || role.isEmpty()){
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
             }
+            if (subscriptionPlan == null || subscriptionPlan.isBlank()){
+                subscriptionPlan = "none";
+            }
             UserDTO userDTO = UserDTO.builder()
-                    .password(password.trim())
-                    .fullName(fullName.trim()).subscriptionPlan(subscriptionPlan)
+                    .password(password)
+                    .fullName(fullName).subscriptionPlan(subscriptionPlan)
                     .subscriptionStartDate(subscriptionStartDate).subscriptionEndDate(subscriptionEndDate)
-                    .role(role)
+                    .role(role).paid(paid)
                     .build();
             User user = userService.updateUser(id, userDTO);
             return ResponseEntity.status(200).body(ApiResponse.success(200, "", user));
@@ -101,7 +123,7 @@ public class UserController {
                                       @RequestParam String password,
                                       @RequestParam String fullName){
         try {
-            if (email.trim().isEmpty() || password.trim().isEmpty() || fullName.trim().isEmpty()){
+            if (email.isEmpty() || password.isEmpty() || fullName.isEmpty()){
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
             }
             String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
@@ -109,9 +131,9 @@ public class UserController {
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Email không hợp lệ", "Bad Request"));
             }
             UserDTO userDTO = new UserDTO();
-            userDTO.setEmail(email.trim());
-            userDTO.setPassword(password.trim());
-            userDTO.setFullName(fullName.trim());
+            userDTO.setEmail(email);
+            userDTO.setPassword(password);
+            userDTO.setFullName(fullName);
             userService.register(userDTO);
             return ResponseEntity.status(201).body(ApiResponse.success(201, "", userDTO));
         }catch (Exception e){
@@ -147,7 +169,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/logout")
+    @PostMapping("/logout")
     public ResponseEntity<ApiResponse<?>> logout(HttpServletRequest request){
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")){

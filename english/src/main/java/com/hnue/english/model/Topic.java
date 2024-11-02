@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -23,8 +24,20 @@ public class Topic {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "order")
-    private int order;
+    @Column(name = "content")
+    private String content;
+
+    @Column(name = "display_order")
+    private int displayOrder;
+
+    @Column(name = "image")
+    private String image;
+
+    @Column(name = "created_at")
+    private Date createdAt;
+
+    @Column(name = "updated_at")
+    private Date updatedAt;
 
     @JsonBackReference
     @ManyToOne(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
@@ -38,10 +51,11 @@ public class Topic {
 
     }
 
-    public Topic(String topicName, String description, int order) {
+    public Topic(String topicName, String description, String content, int displayOrder) {
         this.topicName = topicName;
         this.description = description;
-        this.order = order;
+        this.content = content;
+        this.displayOrder = displayOrder;
     }
 
     public void add(Vocabulary vocabulary){

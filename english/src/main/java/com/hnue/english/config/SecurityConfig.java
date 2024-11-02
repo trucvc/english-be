@@ -2,6 +2,7 @@ package com.hnue.english.config;
 
 import com.hnue.english.model.User;
 import com.hnue.english.reponsitory.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,22 +16,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
-
     private final UserRepository userRepository;
-
-    @Autowired
-    public SecurityConfig(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
 
     @Bean
     public UserDetailsService userDetailsService(){
-        return email -> {
-            User user =  userRepository.findByEmail(email).orElseThrow(() ->
+        return email -> userRepository.findByEmail(email).orElseThrow(() ->
                     new UsernameNotFoundException("Không tìm thấy email "+ email));
-            return user;
-        };
     }
 
     @Bean
@@ -39,16 +32,17 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider(){
+    public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService());
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
-
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception{
-        return authenticationConfiguration.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config
+    ) throws Exception {
+        return config.getAuthenticationManager();
     }
 }
 

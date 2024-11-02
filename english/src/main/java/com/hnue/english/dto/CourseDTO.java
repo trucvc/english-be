@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CourseDTO {
-    String courseName;
-    String description;
+    private String courseName;
+    private String description;
 }

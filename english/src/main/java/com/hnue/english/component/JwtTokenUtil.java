@@ -1,6 +1,5 @@
 package com.hnue.english.component;
 
-import com.hnue.english.model.User;
 import com.hnue.english.service.TokenBlacklistService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -35,7 +34,7 @@ public class JwtTokenUtil {
         Map<String, Object> claims = new HashMap<>();
         //this.generateSecretKey();
         claims.put("email", user.getEmail());
-
+        claims.put("userId", user.getUserId());
         try {
             String token = Jwts.builder()
                     .setClaims(claims)

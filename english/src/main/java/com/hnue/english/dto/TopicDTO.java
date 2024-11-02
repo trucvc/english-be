@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @Builder
@@ -13,4 +14,6 @@ public class TopicDTO {
     private String topicName;
     private String description;
     private int order;
+    private String content;
+    private MultipartFile image;
 }

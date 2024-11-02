@@ -1,6 +1,7 @@
 package com.hnue.english.config;
 
 import com.hnue.english.filter.JwtTokenFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,19 +15,18 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class WebSecurityConfig {
-
     private final JwtTokenFilter jwtTokenFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http
-                .csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(requests -> {
                     requests.requestMatchers("/api/users/login", "/api/users/register")
                             .permitAll()
                             .anyRequest().authenticated();
                 })
+                .csrf(AbstractHttpConfigurer::disable)
         ;
         return http.build();
     }

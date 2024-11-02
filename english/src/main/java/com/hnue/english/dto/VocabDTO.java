@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @Builder
@@ -14,5 +15,5 @@ public class VocabDTO {
     private String meaning;
     private String exampleSentence;
     private String pronunciation;
-
+    private MultipartFile image;
 }

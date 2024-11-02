@@ -12,6 +12,8 @@ CREATE TABLE `User` (
     `subscription_end_date` DATETIME COMMENT 'Ngày kết thúc gói dịch vụ, dùng để xác định khi nào người dùng cần đăng ký lại.',
     `role` ENUM('ROLE_user', 'ROLE_admin') NOT NULL DEFAULT 'ROLE_user' COMMENT 'Xác định vai trò của người dùng.',
     `paid` TINYINT(1) DEFAULT 0,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo người dùng.',
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật thông tin người dùng.',
     PRIMARY KEY(`user_id`)
 );
 
@@ -19,6 +21,8 @@ CREATE TABLE `Course` (
     `course_id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'Khóa chính định danh khóa học.',
     `course_name` VARCHAR(255) NOT NULL COMMENT 'Tên khóa học.',
     `description` TEXT NOT NULL COMMENT 'Mô tả chi tiết về khóa học.',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo bản ghi.',
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật bản ghi.',
     PRIMARY KEY(`course_id`)
 );
 
@@ -28,6 +32,10 @@ CREATE TABLE `Topic` (
     `course_id` INTEGER COMMENT 'Khóa ngoại tham chiếu đến bảng Course.',
     `description` TEXT COMMENT 'Mô tả chi tiết về chủ đề.',
     `order` INTEGER COMMENT 'Xác định thứ tự của chủ đề trong khóa học.',
+    `image` VARCHAR(255) COMMENT 'Đường dẫn đến ảnh đại diện của chủ đề.',
+    `content` TEXT COMMENT 'Nội dung chi tiết về chủ đề.',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo bản ghi.',
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật bản ghi.',
     PRIMARY KEY(`topic_id`),
     FOREIGN KEY (`course_id`) REFERENCES `Course`(`course_id`) ON UPDATE CASCADE ON DELETE SET NULL
 );
@@ -37,8 +45,11 @@ CREATE TABLE `Vocabulary` (
     `word` VARCHAR(255) COMMENT 'Từ vựng (ví dụ: "doctor", "teacher").',
     `meaning` TEXT COMMENT 'Định nghĩa của từ.',
     `example_sentence` TEXT COMMENT 'Ví dụ về câu chứa từ.',
-    `topic_id` INTEGER COMMENT 'Khóa ngoại tham chiếu đến bảng Topic.',
+    `topic_id` INTEGER COMMENT 'Khóa ngoại tham chiếu đến bảng Topic.', 
     `pronunciation` TEXT COMMENT 'Phát âm.',
+    `image` VARCHAR(255) COMMENT 'Đường dẫn đến ảnh đại diện của chủ đề.',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo bản ghi.',
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật bản ghi.',
     PRIMARY KEY(`vocab_id`),
     FOREIGN KEY (`topic_id`) REFERENCES `Topic`(`topic_id`) ON UPDATE CASCADE ON DELETE SET NULL
 );
