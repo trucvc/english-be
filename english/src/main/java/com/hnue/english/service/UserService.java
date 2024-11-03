@@ -122,6 +122,7 @@ public class UserService {
         user.setFullName(userDTO.getFullName());
         user.setCreatedAt(new Date());
         user.setRole("ROLE_USER");
+        user.setCreatedAt(new Date());
 
         String pass = passwordEncoder.encode(user.getPassword());
         user.setPassword(pass);
