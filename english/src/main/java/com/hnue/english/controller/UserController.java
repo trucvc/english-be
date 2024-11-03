@@ -137,8 +137,8 @@ public class UserController {
             userDTO.setEmail(email);
             userDTO.setPassword(password);
             userDTO.setFullName(fullName);
-            userService.register(userDTO);
-            return ResponseEntity.status(201).body(ApiResponse.success(201, "", userDTO));
+            User user = userService.register(userDTO);
+            return ResponseEntity.status(201).body(ApiResponse.success(201, "", user));
         }catch (Exception e){
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
         }
@@ -164,6 +164,14 @@ public class UserController {
         }catch (Exception e){
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
         }
+    }
+
+    @GetMapping("/account")
+    public ResponseEntity<ApiResponse<?>> fetch(HttpServletRequest request){
+        String authHeader = request.getHeader("Authorization");
+        String token = authHeader.substring(7);
+        User user = userService.fetch(token);
+        return ResponseEntity.status(200).body(ApiResponse.success(200, "", user));
     }
 
     @GetMapping("/refresh")

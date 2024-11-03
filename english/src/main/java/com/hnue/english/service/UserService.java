@@ -106,7 +106,12 @@ public class UserService {
         return jwtTokenUtil.generateToken(existingUser);
     }
 
-    public void register(UserDTO userDTO) throws DataNotFoundException{
+    public User fetch(String token){
+        String email = jwtTokenUtil.extractEmail(token);
+        return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Không tìm thấy user với email: " + email));
+    }
+
+    public User register(UserDTO userDTO) throws DataNotFoundException{
         String email = userDTO.getEmail();
         if (userRepository.existsByEmail(email)){
             throw new DataIntegrityViolationException("Đã tồn tại email");
@@ -121,7 +126,7 @@ public class UserService {
         String pass = passwordEncoder.encode(user.getPassword());
         user.setPassword(pass);
 
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
     public void logout(String token){
