@@ -16,7 +16,10 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/users")
@@ -141,6 +144,16 @@ public class UserController {
         }
     }
 
+    @PostMapping("/list")
+    public ResponseEntity<ApiResponse<?>> createList(@RequestBody List<UserDTO> list){
+        List<UserDTO> uniqueUsers = removeDuplicateEmails(list);
+        List<String> existingEmails = userService.checkExistingEmails(uniqueUsers);
+        if (!existingEmails.isEmpty()) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, existingEmails, "Bad Request"));
+        }
+        return ResponseEntity.status(201).body(ApiResponse.success(201, "Tạo thành công danh sách người dùng", null));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<?>> login(@RequestParam String email, @RequestParam String password){
         try {
@@ -178,5 +191,12 @@ public class UserController {
         String token = authHeader.substring(7);
         userService.logout(token);
         return ResponseEntity.status(200).body(ApiResponse.success(200, "Đăng xuất thành công", null));
+    }
+
+    private List<UserDTO> removeDuplicateEmails(List<UserDTO> userDTOList) {
+        Set<String> seenEmails = new HashSet<>();
+        return userDTOList.stream()
+                .filter(userDTO -> seenEmails.add(userDTO.getEmail()))
+                .collect(Collectors.toList());
     }
 }

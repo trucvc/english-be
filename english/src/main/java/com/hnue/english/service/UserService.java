@@ -20,6 +20,7 @@ import java.time.DateTimeException;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -138,5 +139,27 @@ public class UserService {
             u.setEmail(email);
             return jwtTokenUtil.generateToken(u);
         }
+    }
+
+    public List<String> checkExistingEmails(List<UserDTO> userDTOList) {
+        return userDTOList.stream()
+                .filter(userDTO -> existsByEmail(userDTO.getEmail()))
+                .map(UserDTO::getEmail)
+                .collect(Collectors.toList());
+    }
+
+    public void saveAll(List<UserDTO> userDTOList) {
+        List<User> usersToSave = userDTOList.stream()
+                .map(this::convertToEntity)
+                .collect(Collectors.toList());
+
+        userRepository.saveAll(usersToSave);
+    }
+
+    private User convertToEntity(UserDTO userDTO) {
+        User user = new User();
+        user.setFullName(userDTO.getFullName());
+        user.setEmail(userDTO.getEmail());
+        return user;
     }
 }
