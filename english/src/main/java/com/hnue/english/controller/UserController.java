@@ -3,6 +3,7 @@ package com.hnue.english.controller;
 import com.hnue.english.dto.UserDTO;
 import com.hnue.english.model.User;
 import com.hnue.english.response.ApiResponse;
+import com.hnue.english.response.ImportFromJson;
 import com.hnue.english.response.LoginResponse;
 import com.hnue.english.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,12 +11,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.data.domain.Page;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +28,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+//    private final PagedResourcesAssembler<User> pagedResourcesAssembler;
 
     @InitBinder
     public void initBinder(WebDataBinder dataBinder) {
@@ -35,11 +38,8 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> createUser(@RequestParam String email, @RequestParam String password,
-                                                     @RequestParam String fullName, @RequestParam(required = false) String subscriptionPlan,
-                                                     @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date subscriptionStartDate,
-                                                     @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date subscriptionEndDate,
-                                                     @RequestParam String role){
-        if (email.isEmpty() || password.isEmpty() || fullName.isEmpty() || role.isEmpty()){
+                                                     @RequestParam String fullName, @RequestParam String subscriptionPlan){
+        if (email.isEmpty() || password.isEmpty() || fullName.isEmpty() || subscriptionPlan.isEmpty()){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
         }
         String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
@@ -52,8 +52,6 @@ public class UserController {
         UserDTO userDTO = UserDTO.builder()
                 .email(email).password(password)
                 .fullName(fullName).subscriptionPlan(subscriptionPlan)
-                .subscriptionStartDate(subscriptionStartDate).subscriptionEndDate(subscriptionEndDate)
-                .role(role)
                 .build();
         User u = userService.createUser(userDTO);
         return ResponseEntity.status(201).body(ApiResponse.success(201, "", u));
@@ -77,31 +75,29 @@ public class UserController {
 
     @GetMapping("/page")
     public ResponseEntity<ApiResponse<?>> getUsers(@RequestParam(defaultValue = "0") int page,
-                                                   @RequestParam(defaultValue = "1") int size){
+                                                   @RequestParam(defaultValue = "1") int size,
+                                                   @RequestParam(required = false) String email, @RequestParam(required = false) String fullName,
+                                                   @RequestParam(required = false) String role, @RequestParam(required = false) String subscriptionPlan,
+                                                   @RequestParam(required = false) String sort){
         if (size < 1){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "size phải lớn hơn 0", "Bad Request"));
         }
-        Page<User> users = userService.getUsers(page, size);
+        Page<User> users = userService.getUsers(page, size, email, role, fullName, subscriptionPlan, sort);
+//        PagedModel<EntityModel<User>> pagedModel = pagedResourcesAssembler.toModel(users);
         return ResponseEntity.status(200).body(ApiResponse.success(200, "", users));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> updateUser(@PathVariable int id, @RequestParam(required = false) String password,
-                                                     @RequestParam String fullName, @RequestParam(required = false) String subscriptionPlan,
-                                                     @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date subscriptionStartDate,
-                                                     @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date subscriptionEndDate,
+                                                     @RequestParam String fullName, @RequestParam String subscriptionPlan,
                                                      @RequestParam String role, @RequestParam(required = false) int paid){
         try {
-            if (fullName.isEmpty() || role.isEmpty()){
+            if (fullName.isEmpty() || role.isEmpty() || subscriptionPlan.isEmpty()){
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
-            }
-            if (subscriptionPlan == null || subscriptionPlan.isBlank()){
-                subscriptionPlan = "none";
             }
             UserDTO userDTO = UserDTO.builder()
                     .password(password)
                     .fullName(fullName).subscriptionPlan(subscriptionPlan)
-                    .subscriptionStartDate(subscriptionStartDate).subscriptionEndDate(subscriptionEndDate)
                     .role(role).paid(paid)
                     .build();
             User user = userService.updateUser(id, userDTO);
@@ -116,6 +112,16 @@ public class UserController {
         try {
             userService.deleteUser(id);
             return ResponseEntity.status(200).body(ApiResponse.success(200, "Xóa thành công user với id: "+id, null));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+        }
+    }
+
+    @DeleteMapping("/sub/{id}")
+    public ResponseEntity<ApiResponse<?>> deleteSubUser(@PathVariable int id){
+        try {
+            userService.deleteSubscription(id);
+            return ResponseEntity.status(200).body(ApiResponse.success(200, "Xóa thành công gói đăng kí của user với id: "+id, null));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
         }
@@ -148,10 +154,18 @@ public class UserController {
     public ResponseEntity<ApiResponse<?>> createList(@RequestBody List<UserDTO> list){
         List<UserDTO> uniqueUsers = removeDuplicateEmails(list);
         List<String> existingEmails = userService.checkExistingEmails(uniqueUsers);
+        ImportFromJson u = new ImportFromJson();
         if (!existingEmails.isEmpty()) {
-            return ResponseEntity.status(400).body(ApiResponse.error(400, existingEmails, "Bad Request"));
+            u.setCountError(existingEmails.size());
+            u.setCountSuccess(uniqueUsers.size() - existingEmails.size());
+            u.setError(existingEmails);
+            return ResponseEntity.status(400).body(ApiResponse.success(400, "Danh sách có lỗi", u));
+        }else{
+            u.setCountError(0);
+            u.setCountSuccess(uniqueUsers.size());
+            userService.saveAll(uniqueUsers);
+            return ResponseEntity.status(201).body(ApiResponse.success(201, "Tạo thành công danh sách người dùng", u));
         }
-        return ResponseEntity.status(201).body(ApiResponse.success(201, "Tạo thành công danh sách người dùng", null));
     }
 
     @PostMapping("/login")

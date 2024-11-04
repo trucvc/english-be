@@ -3,7 +3,7 @@ package com.hnue.english.service;
 import com.hnue.english.dto.TopicDTO;
 import com.hnue.english.model.Topic;
 import com.hnue.english.model.Vocabulary;
-import com.hnue.english.reponsitory.TopicRepository;
+import com.hnue.english.repository.TopicRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.time.DateTimeException;
 import java.util.Date;
 import java.util.List;
 

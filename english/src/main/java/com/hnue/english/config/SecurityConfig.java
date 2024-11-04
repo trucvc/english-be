@@ -1,9 +1,7 @@
 package com.hnue.english.config;
 
-import com.hnue.english.model.User;
-import com.hnue.english.reponsitory.UserRepository;
+import com.hnue.english.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

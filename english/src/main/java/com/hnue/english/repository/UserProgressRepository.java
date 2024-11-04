@@ -1,4 +1,4 @@
-package com.hnue.english.reponsitory;
+package com.hnue.english.repository;
 
 import com.hnue.english.model.UserProgress;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -13,8 +13,6 @@ public class UserDTO {
     private String password;
     private String fullName;
     private String subscriptionPlan;
-    private Date subscriptionStartDate;
-    private Date subscriptionEndDate;
     private String role;
     private int paid;
 }

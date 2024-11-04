@@ -1,7 +1,7 @@
 package com.hnue.english.service;
 
 import com.hnue.english.model.Folder;
-import com.hnue.english.reponsitory.FolderRepository;
+import com.hnue.english.repository.FolderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

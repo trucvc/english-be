@@ -4,19 +4,20 @@ import com.hnue.english.component.JwtTokenUtil;
 import com.hnue.english.dto.UserDTO;
 import com.hnue.english.exception.DataNotFoundException;
 import com.hnue.english.model.User;
-import com.hnue.english.reponsitory.UserRepository;
+import com.hnue.english.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.DateTimeException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -36,13 +37,29 @@ public class UserService {
         user.setEmail(userDTO.getEmail());
         user.setPassword(userDTO.getPassword());
         user.setFullName(userDTO.getFullName());
-        user.setSubscriptionPlan(user.getSubscriptionPlan());
-        user.setSubscriptionStartDate(userDTO.getSubscriptionStartDate());
-        user.setSubscriptionEndDate(userDTO.getSubscriptionEndDate());
-        user.setRole("ROLE_"+userDTO.getRole().toUpperCase());
+        user.setSubscriptionPlan(userDTO.getSubscriptionPlan());
+        if (!userDTO.getSubscriptionPlan().equals("none")){
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(new Date());
+            if (userDTO.getSubscriptionPlan().equals("6_months")){
+                calendar.add(Calendar.MONTH, 6);
+                user.setSubscriptionStartDate(new Date());
+                user.setSubscriptionEndDate(calendar.getTime());
+            } else if (userDTO.getSubscriptionPlan().equals("1_year")) {
+                calendar.add(Calendar.YEAR, 1);
+                user.setSubscriptionStartDate(new Date());
+                user.setSubscriptionEndDate(calendar.getTime());
+            }else {
+                calendar.add(Calendar.YEAR, 3);
+                user.setSubscriptionStartDate(new Date());
+                user.setSubscriptionEndDate(calendar.getTime());
+            }
+        }
+        user.setRole("ROLE_USER");
         String pass = passwordEncoder.encode(user.getPassword());
         user.setPassword(pass);
         user.setCreatedAt(new Date());
+        user.setUpdatedAt(new Date());
         return userRepository.save(user);
     }
 
@@ -54,9 +71,71 @@ public class UserService {
         return userRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + id));
     }
 
-    public Page<User> getUsers(int page, int size){
+    public Page<User> getUsers(int page, int size, String email, String fullName, String role, String subscriptionPlan, String sort){
+        Specification<User> spec = (root, query, criteriaBuilder) -> {
+            var predicates= criteriaBuilder.conjunction();
+
+            if (email != null && !email.trim().isEmpty()) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("email"), "%" + email + "%"));
+            }
+
+            if (fullName != null && !fullName.trim().isEmpty()) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("fullName"), "%" + fullName + "%"));
+            }
+
+            if (role != null && !role.trim().isEmpty()) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("role"), "%" + role + "%"));
+            }
+
+            if (subscriptionPlan != null && !subscriptionPlan.trim().isEmpty()) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("subscriptionPlan"), "%" + subscriptionPlan + "%"));
+            }
+
+            if (sort != null && !sort.trim().isEmpty()) {
+                switch (sort) {
+                    case "email":
+                        query.orderBy(criteriaBuilder.asc(root.get("email")));
+                        break;
+                    case "-email":
+                        query.orderBy(criteriaBuilder.desc(root.get("email")));
+                        break;
+                    case "fullName":
+                        query.orderBy(criteriaBuilder.asc(root.get("fullName")));
+                        break;
+                    case "-fullName":
+                        query.orderBy(criteriaBuilder.desc(root.get("fullName")));
+                        break;
+                    case "updatedAt":
+                        query.orderBy(criteriaBuilder.asc(root.get("updatedAt")));
+                        break;
+                    case "-updatedAt":
+                        query.orderBy(criteriaBuilder.desc(root.get("updatedAt")));
+                        break;
+                    case "subscriptionStartDate":
+                        predicates = criteriaBuilder.and(predicates, criteriaBuilder.isNotNull(root.get("subscriptionStartDate")));
+                        query.orderBy(criteriaBuilder.asc(root.get("subscriptionStartDate")));
+                        break;
+                    case "-subscriptionStartDate":
+                        predicates = criteriaBuilder.and(predicates, criteriaBuilder.isNotNull(root.get("subscriptionStartDate")));
+                        query.orderBy(criteriaBuilder.desc(root.get("subscriptionStartDate")));
+                        break;
+                    case "subscriptionEndDate":
+                        predicates = criteriaBuilder.and(predicates, criteriaBuilder.isNotNull(root.get("subscriptionEndDate")));
+                        query.orderBy(criteriaBuilder.asc(root.get("subscriptionEndDate")));
+                        break;
+                    case "-subscriptionEndDate":
+                        predicates = criteriaBuilder.and(predicates, criteriaBuilder.isNotNull(root.get("subscriptionEndDate")));
+                        query.orderBy(criteriaBuilder.desc(root.get("subscriptionEndDate")));
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return predicates;
+        };
         Pageable pageable = PageRequest.of(page, size);
-        return userRepository.findAll(pageable);
+        return userRepository.findAll(spec,pageable);
     }
 
     public User getUserByEmail(String email){
@@ -70,12 +149,38 @@ public class UserService {
         }
         user.setFullName(userDTO.getFullName());
         user.setSubscriptionPlan(userDTO.getSubscriptionPlan());
-        user.setSubscriptionStartDate(userDTO.getSubscriptionStartDate());
-        user.setSubscriptionEndDate(userDTO.getSubscriptionEndDate());
-        user.setRole("ROLE_"+userDTO.getRole().toUpperCase());
+        if (user.getSubscriptionEndDate().after(new Date())){
+            throw new RuntimeException("User vẫn còn thời hạn của gói đăng kí");
+        }else{
+            if (!userDTO.getSubscriptionPlan().equals("none")){
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(new Date());
+                if (userDTO.getSubscriptionPlan().equals("6_months")){
+                    calendar.add(Calendar.MONTH, 6);
+                    user.setSubscriptionStartDate(new Date());
+                    user.setSubscriptionEndDate(calendar.getTime());
+                } else if (userDTO.getSubscriptionPlan().equals("1_year")) {
+                    calendar.add(Calendar.YEAR, 1);
+                    user.setSubscriptionStartDate(new Date());
+                    user.setSubscriptionEndDate(calendar.getTime());
+                }else {
+                    calendar.add(Calendar.YEAR, 3);
+                    user.setSubscriptionStartDate(new Date());
+                    user.setSubscriptionEndDate(calendar.getTime());
+                }
+            }
+        }
+        user.setRole(userDTO.getRole());
         user.setPaid(userDTO.getPaid());
         user.setUpdatedAt(new Date());
         return userRepository.save(user);
+    }
+
+    public void deleteSubscription(int id){
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + id));
+        user.setSubscriptionPlan("none");
+        user.setSubscriptionEndDate(new Date());
+        userRepository.save(user);
     }
 
     public void deleteUser(int id){
@@ -120,9 +225,10 @@ public class UserService {
         user.setEmail(userDTO.getEmail());
         user.setPassword(userDTO.getPassword());
         user.setFullName(userDTO.getFullName());
+        user.setSubscriptionPlan("none");
         user.setCreatedAt(new Date());
         user.setRole("ROLE_USER");
-        user.setCreatedAt(new Date());
+        user.setUpdatedAt(new Date());
 
         String pass = passwordEncoder.encode(user.getPassword());
         user.setPassword(pass);
@@ -166,6 +272,12 @@ public class UserService {
         User user = new User();
         user.setFullName(userDTO.getFullName());
         user.setEmail(userDTO.getEmail());
+        String pass = passwordEncoder.encode(userDTO.getPassword());
+        user.setPassword(pass);
+        user.setSubscriptionPlan("none");
+        user.setRole("ROLE_USER");
+        user.setCreatedAt(new Date());
+        user.setUpdatedAt(new Date());
         return user;
     }
 }

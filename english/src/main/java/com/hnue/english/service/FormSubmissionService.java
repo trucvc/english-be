@@ -1,7 +1,7 @@
 package com.hnue.english.service;
 
 import com.hnue.english.model.FormSubmission;
-import com.hnue.english.reponsitory.FormSubmissionRepository;
+import com.hnue.english.repository.FormSubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

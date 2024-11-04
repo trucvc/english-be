@@ -14,8 +14,8 @@ public class ApiResponse<T>{
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String message;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private List<String> listMessage;
+//    @JsonInclude(JsonInclude.Include.NON_NULL)
+//    private List<String> listMessage;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private T data;
@@ -40,12 +40,12 @@ public class ApiResponse<T>{
                 .build();
     }
 
-    public static ApiResponse<Void> error(int statusCode, List<String> message, String error) {
-        return ApiResponse.<Void>builder()
-                .statusCode(statusCode)
-                .listMessage(message)
-                .data(null)
-                .error(error)
-                .build();
-    }
+//    public static ApiResponse<Void> error(int statusCode, List<String> message, String error) {
+//        return ApiResponse.<Void>builder()
+//                .statusCode(statusCode)
+//                .listMessage(message)
+//                .data(null)
+//                .error(error)
+//                .build();
+//    }
 }

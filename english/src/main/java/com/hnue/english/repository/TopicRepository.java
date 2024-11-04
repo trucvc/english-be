@@ -1,4 +1,4 @@
-package com.hnue.english.reponsitory;
+package com.hnue.english.repository;
 
 import com.hnue.english.model.Topic;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -36,16 +36,16 @@ public class TopicController {
         if (topicName.isEmpty() || description.isEmpty() || order == 0){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
         }
-        List<String> error = new ArrayList<>();
+//        List<String> error = new ArrayList<>();
         if (topicService.existsByTopicName(topicName)){
-            error.add("Đã tồn tại chủ đề tới tên tiếng anh này!");
+            return ResponseEntity.status(400).body(ApiResponse.error(400, "Đã tồn tại tên chủ đề tiếng anh này", "Bad Request"));
         }
-        if (topicService.existsByDescription(description)) {
-            error.add("Đã tồn tại chủ đề tới tên tiếng việt này!");
-        }
-        if (!error.isEmpty()){
-            return ResponseEntity.status(400).body(ApiResponse.error(400, error, "Bad Request"));
-        }
+//        if (topicService.existsByDescription(description)) {
+//            error.add("Đã tồn tại chủ đề tới tên tiếng việt này!");
+//        }
+//        if (!error.isEmpty()){
+//            return ResponseEntity.status(400).body(ApiResponse.error(400, error, "Bad Request"));
+//        }
         TopicDTO topicDTO = TopicDTO.builder()
                 .topicName(topicName).description(description).order(order).build();
         Topic t = topicService.createTopic(topicDTO);

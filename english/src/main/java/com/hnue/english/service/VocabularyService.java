@@ -2,14 +2,13 @@ package com.hnue.english.service;
 
 import com.hnue.english.dto.VocabDTO;
 import com.hnue.english.model.Vocabulary;
-import com.hnue.english.reponsitory.VocabularyRepository;
+import com.hnue.english.repository.VocabularyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.DateTimeException;
 import java.util.Date;
 import java.util.List;
 

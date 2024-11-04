@@ -3,7 +3,7 @@ package com.hnue.english.service;
 import com.hnue.english.dto.CourseDTO;
 import com.hnue.english.model.Course;
 import com.hnue.english.model.Topic;
-import com.hnue.english.reponsitory.CourseRepository;
+import com.hnue.english.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
