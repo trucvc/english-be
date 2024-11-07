@@ -38,8 +38,9 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> createUser(@RequestParam String email, @RequestParam String password,
-                                                     @RequestParam String fullName, @RequestParam String subscriptionPlan){
-        if (email.isEmpty() || password.isEmpty() || fullName.isEmpty() || subscriptionPlan.isEmpty()){
+                                                     @RequestParam String fullName, @RequestParam String subscriptionPlan,
+                                                     @RequestParam String role){
+        if (email.isEmpty() || password.isEmpty() || fullName.isEmpty() || subscriptionPlan.isEmpty() || role.isEmpty()){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
         }
         String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
@@ -52,6 +53,7 @@ public class UserController {
         UserDTO userDTO = UserDTO.builder()
                 .email(email).password(password)
                 .fullName(fullName).subscriptionPlan(subscriptionPlan)
+                .role(role)
                 .build();
         User u = userService.createUser(userDTO);
         return ResponseEntity.status(201).body(ApiResponse.success(201, "", u));
@@ -90,7 +92,7 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> updateUser(@PathVariable int id, @RequestParam(required = false) String password,
                                                      @RequestParam String fullName, @RequestParam String subscriptionPlan,
-                                                     @RequestParam String role, @RequestParam(required = false) int paid){
+                                                     @RequestParam String role){
         try {
             if (fullName.isEmpty() || role.isEmpty() || subscriptionPlan.isEmpty()){
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
@@ -98,7 +100,7 @@ public class UserController {
             UserDTO userDTO = UserDTO.builder()
                     .password(password)
                     .fullName(fullName).subscriptionPlan(subscriptionPlan)
-                    .role(role).paid(paid)
+                    .role(role)
                     .build();
             User user = userService.updateUser(id, userDTO);
             return ResponseEntity.status(200).body(ApiResponse.success(200, "", user));

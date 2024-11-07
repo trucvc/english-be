@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Ignore firebase-adminsdk.json file
+english/src/main/resources/firebase-adminsdk.json

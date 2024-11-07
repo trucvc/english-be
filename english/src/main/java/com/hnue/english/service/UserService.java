@@ -55,7 +55,7 @@ public class UserService {
                 user.setSubscriptionEndDate(calendar.getTime());
             }
         }
-        user.setRole("ROLE_USER");
+        user.setRole(userDTO.getRole());
         String pass = passwordEncoder.encode(user.getPassword());
         user.setPassword(pass);
         user.setCreatedAt(new Date());
@@ -170,8 +170,10 @@ public class UserService {
                 }
             }
         }
+//        if (user.getRole().equals("ROLE_ADMIN") && userDTO.getRole().equals("ROLE_USER")){
+//            throw new RuntimeException("Bạn không thể cập nhật quyền xuống người dùng");
+//        }
         user.setRole(userDTO.getRole());
-        user.setPaid(userDTO.getPaid());
         user.setUpdatedAt(new Date());
         return userRepository.save(user);
     }
@@ -185,6 +187,9 @@ public class UserService {
 
     public void deleteUser(int id){
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + id));
+        if (user.getRole().equals("ROLE_ADMIN")){
+            throw new RuntimeException("Không thể xóa quản trị viên");
+        }
         userRepository.delete(user);
     }
 
