@@ -82,7 +82,7 @@ public class UserController {
         if (size < 1){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "size phải lớn hơn 0", "Bad Request"));
         }
-        Page<User> users = userService.getUsers(page, size, email, role, fullName, subscriptionPlan, sort);
+        Page<User> users = userService.getUsers(page, size, email, fullName, role, subscriptionPlan, sort);
 //        PagedModel<EntityModel<User>> pagedModel = pagedResourcesAssembler.toModel(users);
         return ResponseEntity.status(200).body(ApiResponse.success(200, "", users));
     }
