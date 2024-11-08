@@ -1,26 +1,40 @@
 package com.hnue.english.service;
 
+import com.hnue.english.dto.ListTopic;
+import com.hnue.english.dto.ListVocab;
 import com.hnue.english.dto.VocabDTO;
+import com.hnue.english.model.Course;
+import com.hnue.english.model.Topic;
 import com.hnue.english.model.Vocabulary;
 import com.hnue.english.repository.VocabularyRepository;
+import jakarta.persistence.criteria.JoinType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class VocabularyService {
     private final VocabularyRepository vocabularyRepository;
     private final FirebaseStorageService firebaseStorageService;
+    private final TopicService topicService;
 
-    public Vocabulary createVocab(VocabDTO vocabDTO){
+    public Vocabulary createVocab(VocabDTO vocabDTO, int topicId){
         Vocabulary vocabulary = new Vocabulary(vocabDTO.getWord(), vocabDTO.getMeaning(), vocabDTO.getExampleSentence(), vocabDTO.getPronunciation());
+        vocabulary.setAudio(vocabDTO.getAudio());
+        if (topicId != 0){
+            Topic topic = topicService.getTopic(topicId);
+            topic.add(vocabulary);
+        }
         vocabulary.setCreatedAt(new Date());
+        vocabulary.setUpdatedAt(new Date());
         return vocabularyRepository.save(vocabulary);
     }
 
@@ -29,9 +43,51 @@ public class VocabularyService {
         return vocabulary;
     }
 
-    public Page<Vocabulary> getVocabs(int page, int size){
+    public Page<Vocabulary> getVocabs(int page, int size, String word, String meaning, int id, String sort){
+        Specification<Vocabulary> spec = (root, query, criteriaBuilder) -> {
+            var predicates= criteriaBuilder.conjunction();
+
+            if (word != null && !word.trim().isEmpty()) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("word"), "%" + word + "%"));
+            }
+
+            if (meaning != null && !meaning.trim().isEmpty()) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("fullName"), "%" + meaning + "%"));
+            }
+
+            if (id != 0) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.join("topic", JoinType.INNER).get("id"), id));
+            }
+
+            if (sort != null && !sort.trim().isEmpty()) {
+                switch (sort) {
+                    case "word":
+                        query.orderBy(criteriaBuilder.asc(root.get("word")));
+                        break;
+                    case "-word":
+                        query.orderBy(criteriaBuilder.desc(root.get("word")));
+                        break;
+                    case "meaning":
+                        query.orderBy(criteriaBuilder.asc(root.get("meaning")));
+                        break;
+                    case "-meaning":
+                        query.orderBy(criteriaBuilder.desc(root.get("meaning")));
+                        break;
+                    case "updatedAt":
+                        query.orderBy(criteriaBuilder.asc(root.get("updatedAt")));
+                        break;
+                    case "-updatedAt":
+                        query.orderBy(criteriaBuilder.desc(root.get("updatedAt")));
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return predicates;
+        };
         Pageable pageable = PageRequest.of(page, size);
-        return vocabularyRepository.findAll(pageable);
+        return vocabularyRepository.findAll(spec, pageable);
     }
 
     public List<Vocabulary> getAllVocab(){
@@ -51,50 +107,8 @@ public class VocabularyService {
         return vocabularyRepository.save(vocabulary);
     }
 
-    public Vocabulary uploadImageVocab(int id, VocabDTO vocabDTO){
-        Vocabulary vocabulary = vocabularyRepository.findById(id).orElseThrow(()-> new RuntimeException("Không tồn tại từ vựng với id: "+id));
-        String url = "";
-        try {
-            url = firebaseStorageService.uploadFile(vocabDTO.getImage());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        if (vocabulary.getImage() == null || vocabulary.getImage().isEmpty()){
-            vocabulary.setImage(url);
-        }else {
-            try {
-                firebaseStorageService.deleteFile(vocabulary.getImage());
-                vocabulary.setImage(url);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return vocabularyRepository.save(vocabulary);
-    }
-
-    public void deleteImageVocab(int id){
-        Vocabulary vocabulary = vocabularyRepository.findById(id).orElseThrow(()-> new RuntimeException("Không tồn tại từ vựng với id: "+id));
-        if (vocabulary.getImage() != null && !vocabulary.getImage().isEmpty()){
-            try {
-                firebaseStorageService.deleteFile(vocabulary.getImage());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            vocabulary.setImage("");
-            vocabularyRepository.save(vocabulary);
-        }
-    }
-
     public void deleteVocab(int id){
         Vocabulary vocabulary = vocabularyRepository.findById(id).orElseThrow(()-> new RuntimeException("Không tồn tại từ vựng với id: "+id));
-        try {
-            firebaseStorageService.deleteFile(vocabulary.getPronunciation());
-            if (vocabulary.getImage() != null && !vocabulary.getImage().isEmpty()){
-                firebaseStorageService.deleteFile(vocabulary.getImage());
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
         vocabularyRepository.delete(vocabulary);
     }
 
@@ -105,5 +119,34 @@ public class VocabularyService {
 
     public boolean existsByWord(String word){
         return vocabularyRepository.existsByWord(word);
+    }
+
+    public List<String> checkExistingWords(List<ListVocab> list) {
+        return list.stream()
+                .filter(listVocab -> existsByWord(listVocab.getWord()))
+                .map(ListVocab::getWord)
+                .collect(Collectors.toList());
+    }
+
+    public void saveAll(List<ListVocab> list) {
+        List<Vocabulary> coursesToSave = list.stream()
+                .map(this::convertToEntity)
+                .collect(Collectors.toList());
+
+        vocabularyRepository.saveAll(coursesToSave);
+    }
+
+    private Vocabulary convertToEntity(ListVocab listVocab) {
+        Vocabulary vocabulary = new Vocabulary();
+        vocabulary.setWord(listVocab.getWord());
+        vocabulary.setMeaning(listVocab.getMeaning());
+        vocabulary.setExampleSentence(listVocab.getExampleSentence());
+        vocabulary.setPronunciation(listVocab.getPronunciation());
+        vocabulary.setAudio(listVocab.getAudio());
+        Topic topic = topicService.getTopic(listVocab.getTopicId());
+        topic.add(vocabulary);
+        vocabulary.setCreatedAt(new Date());
+        vocabulary.setUpdatedAt(new Date());
+        return vocabulary;
     }
 }

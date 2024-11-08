@@ -1,11 +1,10 @@
 package com.hnue.english.controller;
 
-import com.hnue.english.dto.TopicDTO;
-import com.hnue.english.dto.VocabDTO;
+import com.hnue.english.dto.*;
 import com.hnue.english.model.Topic;
-import com.hnue.english.model.Vocabulary;
 import com.hnue.english.response.ApiResponse;
-import com.hnue.english.service.FirebaseStorageService;
+import com.hnue.english.response.ImportFromJson;
+import com.hnue.english.service.CourseService;
 import com.hnue.english.service.TopicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
@@ -15,14 +14,17 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/topics")
 @RequiredArgsConstructor
 public class TopicController {
     private final TopicService topicService;
+    private final CourseService courseService;
 
     @InitBinder
     public void initBinder(WebDataBinder dataBinder) {
@@ -32,24 +34,21 @@ public class TopicController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> createTopic(@RequestParam String topicName, @RequestParam String description,
-                                                      @RequestParam(defaultValue = "0") int order){
-        if (topicName.isEmpty() || description.isEmpty() || order == 0){
+                                                      @RequestParam(required = false, defaultValue = "0") int courseId){
+        if (topicName.isEmpty() || description.isEmpty()){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
         }
-//        List<String> error = new ArrayList<>();
         if (topicService.existsByTopicName(topicName)){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Đã tồn tại tên chủ đề tiếng anh này", "Bad Request"));
         }
-//        if (topicService.existsByDescription(description)) {
-//            error.add("Đã tồn tại chủ đề tới tên tiếng việt này!");
-//        }
-//        if (!error.isEmpty()){
-//            return ResponseEntity.status(400).body(ApiResponse.error(400, error, "Bad Request"));
-//        }
         TopicDTO topicDTO = TopicDTO.builder()
-                .topicName(topicName).description(description).order(order).build();
-        Topic t = topicService.createTopic(topicDTO);
-        return ResponseEntity.status(201).body(ApiResponse.success(201, "", t));
+                .topicName(topicName).description(description).build();
+        try {
+            Topic t = topicService.createTopic(topicDTO, courseId);
+            return ResponseEntity.status(201).body(ApiResponse.success(201, "", t));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+        }
     }
 
     @GetMapping("/{id}")
@@ -73,12 +72,15 @@ public class TopicController {
     }
 
     @GetMapping("/page")
-    public ResponseEntity<ApiResponse<?>> getTopics(@RequestParam(defaultValue = "0") int page,
-                                                   @RequestParam(defaultValue = "1") int size){
+    public ResponseEntity<ApiResponse<?>> getTopics(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "1") int size,
+                                                    @RequestParam(required = false) String topicName,
+                                                    @RequestParam(required = false) String description,
+                                                    @RequestParam(required = false, defaultValue = "0") int id,
+                                                    @RequestParam(required = false) String sort){
         if (size < 1){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "size phải lớn hơn 0", "Bad Request"));
         }
-        Page<Topic> topics = topicService.getTopics(page, size);
+        Page<Topic> topics = topicService.getTopics(page, size, topicName, description, id, sort);
         return ResponseEntity.status(200).body(ApiResponse.success(200, "", topics));
     }
 
@@ -95,7 +97,7 @@ public class TopicController {
                 }
             }
             TopicDTO topicDTO = TopicDTO.builder()
-                    .topicName(topicName).description(description).order(order).build();
+                    .topicName(topicName).description(description).build();
             Topic topic = topicService.updateTopic(id, topicDTO);
             return ResponseEntity.status(201).body(ApiResponse.success(201, "", topic));
         } catch (Exception e) {
@@ -140,6 +142,38 @@ public class TopicController {
         } catch (Exception e) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
         }
+    }
+
+    @PostMapping("/list")
+    public ResponseEntity<ApiResponse<?>> createList(@RequestBody List<ListTopic> list){
+        ImportFromJson t = new ImportFromJson();
+        List<ListTopic> uniqueTopics = removeDuplicateTopicNames(list);
+        List<String> existingTopicNames = topicService.checkExistingTopicNames(uniqueTopics);
+        if (!existingTopicNames.isEmpty()) {
+            t.setCountError(existingTopicNames.size());
+            t.setCountSuccess(uniqueTopics.size() - existingTopicNames.size());
+            t.setError(existingTopicNames);
+            return ResponseEntity.status(400).body(ApiResponse.success(400, "Đã tồi tại tên", t));
+        }
+
+        List<String> nonExistingCourseId = courseService.checkNonExistingIdCourses(uniqueTopics);
+        if (!nonExistingCourseId.isEmpty()){
+            t.setCountError(nonExistingCourseId.size());
+            t.setCountSuccess(uniqueTopics.size() - nonExistingCourseId.size());
+            t.setError(nonExistingCourseId);
+            return ResponseEntity.status(400).body(ApiResponse.success(400, "Không tồn tại course với id", t));
+        }
+        t.setCountError(0);
+        t.setCountSuccess(uniqueTopics.size());
+        topicService.saveAll(uniqueTopics);
+        return ResponseEntity.status(201).body(ApiResponse.success(201, "Tạo thành công danh sách topic", t));
+    }
+
+    private List<ListTopic> removeDuplicateTopicNames(List<ListTopic> list) {
+        Set<String> seenTopicNames = new HashSet<>();
+        return list.stream()
+                .filter(listTopic -> seenTopicNames.add(listTopic.getTopicName()))
+                .collect(Collectors.toList());
     }
 
     private boolean isImageFile(String contentType) {

@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -154,14 +155,27 @@ public class UserController {
 
     @PostMapping("/list")
     public ResponseEntity<ApiResponse<?>> createList(@RequestBody List<UserDTO> list){
-        List<UserDTO> uniqueUsers = removeDuplicateEmails(list);
-        List<String> existingEmails = userService.checkExistingEmails(uniqueUsers);
         ImportFromJson u = new ImportFromJson();
+        List<UserDTO> uniqueUsers = removeDuplicateEmails(list);
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+        List<String> email = new ArrayList<>();
+        for (UserDTO dto : list){
+            if (!dto.getEmail().matches(emailRegex)){
+                email.add(dto.getEmail());
+            }
+        }
+        if (!email.isEmpty()){
+            u.setCountError(email.size());
+            u.setCountSuccess(uniqueUsers.size() - email.size());
+            u.setError(email);
+            return ResponseEntity.status(400).body(ApiResponse.success(400, "Email không hợp lệ", u));
+        }
+        List<String> existingEmails = userService.checkExistingEmails(uniqueUsers);
         if (!existingEmails.isEmpty()) {
             u.setCountError(existingEmails.size());
             u.setCountSuccess(uniqueUsers.size() - existingEmails.size());
             u.setError(existingEmails);
-            return ResponseEntity.status(400).body(ApiResponse.success(400, "Danh sách có lỗi", u));
+            return ResponseEntity.status(400).body(ApiResponse.success(400, "Đã tồi tại email", u));
         }else{
             u.setCountError(0);
             u.setCountSuccess(uniqueUsers.size());

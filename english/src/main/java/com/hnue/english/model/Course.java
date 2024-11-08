@@ -1,5 +1,6 @@
 package com.hnue.english.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -33,7 +34,7 @@ public class Course {
     @Column(name = "updated_at")
     private Date updatedAt;
 
-    @JsonManagedReference
+    @JsonBackReference
     @OneToMany(mappedBy = "course", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     private List<Topic> topics;
 

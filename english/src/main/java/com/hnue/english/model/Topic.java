@@ -1,6 +1,7 @@
 package com.hnue.english.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -24,9 +25,6 @@ public class Topic {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "display_order")
-    private int displayOrder;
-
     @Column(name = "image")
     private String image;
 
@@ -36,11 +34,12 @@ public class Topic {
     @Column(name = "updated_at")
     private Date updatedAt;
 
-    @JsonBackReference
+    @JsonManagedReference
     @ManyToOne(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinColumn(name = "course_id")
     private Course course;
 
+    @JsonBackReference
     @OneToMany(mappedBy = "topic", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     private List<Vocabulary> vocabularies;
 
@@ -48,10 +47,9 @@ public class Topic {
 
     }
 
-    public Topic(String topicName, String description, int displayOrder) {
+    public Topic(String topicName, String description) {
         this.topicName = topicName;
         this.description = description;
-        this.displayOrder = displayOrder;
     }
 
     public void add(Vocabulary vocabulary){

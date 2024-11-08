@@ -4,14 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TopicDTO {
-    private String topicName;
+public class ListCourse {
+    private String courseName;
     private String description;
-    private MultipartFile image;
+    private String courseTarget;
 }

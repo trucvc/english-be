@@ -1,9 +1,14 @@
 package com.hnue.english.controller;
 
+import com.hnue.english.dto.ListTopic;
+import com.hnue.english.dto.ListVocab;
 import com.hnue.english.dto.VocabDTO;
 import com.hnue.english.model.Vocabulary;
 import com.hnue.english.response.ApiResponse;
+import com.hnue.english.response.ImportFromJson;
+import com.hnue.english.service.ExternalApiService;
 import com.hnue.english.service.FirebaseStorageService;
+import com.hnue.english.service.TopicService;
 import com.hnue.english.service.VocabularyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
@@ -13,14 +18,20 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/vocabs")
 @RequiredArgsConstructor
 public class VocabularyController {
     private final VocabularyService vocabularyService;
+    private final ExternalApiService apiService;
     private final FirebaseStorageService firebaseStorageService;
+    private final TopicService topicService;
 
     @InitBinder
     public void initBinder(WebDataBinder dataBinder) {
@@ -30,28 +41,29 @@ public class VocabularyController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> createVocab(@RequestParam String word, @RequestParam String meaning,
-                                                      @RequestParam String exampleSentence, @RequestParam MultipartFile pronunciation){
-        if (word.isEmpty() || meaning.isEmpty() || exampleSentence.isEmpty() || pronunciation.isEmpty()){
+                                                      @RequestParam(required = false, defaultValue = "0") int topicId){
+        if (word.isEmpty() || meaning.isEmpty()){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
         }
         if (vocabularyService.existsByWord(word)){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Đã tồn tại từ vựng này", "Bad Request"));
         }
-        String contentType = pronunciation.getContentType();
-        if (contentType == null || !isAudioFile(contentType)) {
-            return ResponseEntity.status(400).body(ApiResponse.error(400, "File không phải file âm thanh", "Bad Request"));
-        }
-        String url = "";
         try {
-            url = firebaseStorageService.uploadFile(pronunciation);
+            Map<String, Object> map = apiService.getWordDefinitionAsMap(word);
+            List<Map<String, Object>> pronunciationList = (List<Map<String, Object>>) map.get("pronunciation");
+            List<Map<String, Object>> definitionList = (List<Map<String, Object>>) map.get("definition");
+            VocabDTO vocabDTO = VocabDTO.builder()
+                    .word(word).meaning(meaning)
+                    .exampleSentence((String) definitionList.getFirst().get("text"))
+                    .pronunciation((String) pronunciationList.getFirst().get("pron"))
+                    .audio((String) pronunciationList.getFirst().get("url"))
+                    .build();
+            Vocabulary v = vocabularyService.createVocab(vocabDTO, topicId);
+            return ResponseEntity.status(201).body(ApiResponse.success(201, "", v));
+            //return ResponseEntity.status(201).body(ApiResponse.success(201, "", pronunciationList.get(0).get("url")));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
         }
-        VocabDTO vocabDTO = VocabDTO.builder()
-                .word(word).meaning(meaning).exampleSentence(exampleSentence).pronunciation(url)
-                .build();
-        Vocabulary v = vocabularyService.createVocab(vocabDTO);
-        return ResponseEntity.status(201).body(ApiResponse.success(201, "", v));
     }
 
     @GetMapping
@@ -65,12 +77,15 @@ public class VocabularyController {
     }
 
     @GetMapping("/page")
-    public ResponseEntity<ApiResponse<?>> getVocabs(@RequestParam(defaultValue = "0") int page,
-                                                   @RequestParam(defaultValue = "1") int size){
+    public ResponseEntity<ApiResponse<?>> getVocabs(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "1") int size,
+                                                    @RequestParam(required = false) String word,
+                                                    @RequestParam(required = false) String meaning,
+                                                    @RequestParam(required = false, defaultValue = "0") int id,
+                                                    @RequestParam(required = false) String sort){
         if (size < 1){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "size phải lớn hơn 0", "Bad Request"));
         }
-        Page<Vocabulary> vocabs = vocabularyService.getVocabs(page, size);
+        Page<Vocabulary> vocabs = vocabularyService.getVocabs(page, size, word, meaning, id, sort);
         return ResponseEntity.status(200).body(ApiResponse.success(200, "", vocabs));
     }
 
@@ -132,33 +147,57 @@ public class VocabularyController {
         }
     }
 
-    @PostMapping("/image/{id}")
-    public ResponseEntity<ApiResponse<?>> uploadImageVocab(@PathVariable("id") int id, @RequestParam MultipartFile image){
-        try {
-            if (image.isEmpty()){
-                return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
-            }
-            String contentType = image.getContentType();
-            if (contentType == null || !isImageFile(contentType)){
-                return ResponseEntity.status(400).body(ApiResponse.error(400, "File không phải là ảnh", "Bad Request"));
-            }
-            VocabDTO vocabDTO = VocabDTO.builder()
-                    .image(image).build();
-            Vocabulary vocabulary = vocabularyService.uploadImageVocab(id, vocabDTO);
-            return ResponseEntity.status(201).body(ApiResponse.success(201, "", vocabulary));
-        } catch (Exception e) {
-            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+    @PostMapping("/list")
+    public ResponseEntity<ApiResponse<?>> createList(@RequestBody List<ListVocab> list){
+        ImportFromJson v = new ImportFromJson();
+        List<ListVocab> uniqueVocabs = removeDuplicateWords(list);
+        List<String> existingWords = vocabularyService.checkExistingWords(uniqueVocabs);
+        if (!existingWords.isEmpty()) {
+            v.setCountError(existingWords.size());
+            v.setCountSuccess(uniqueVocabs.size() - existingWords.size());
+            v.setError(existingWords);
+            return ResponseEntity.status(400).body(ApiResponse.success(400, "Đã tồi tại tên", v));
         }
+
+        List<String> nonExistingTopicId = topicService.checkNonExistingIdTopics(uniqueVocabs);
+        if (!nonExistingTopicId.isEmpty()){
+            v.setCountError(nonExistingTopicId.size());
+            v.setCountSuccess(uniqueVocabs.size() - nonExistingTopicId.size());
+            v.setError(nonExistingTopicId);
+            return ResponseEntity.status(400).body(ApiResponse.success(400, "Không tồn tại topic với id", v));
+        }
+
+        List<String> checkValidWords = apiService.checkValidWords(uniqueVocabs);
+        if (!checkValidWords.isEmpty()){
+            v.setCountError(checkValidWords.size());
+            v.setCountSuccess(uniqueVocabs.size() - checkValidWords.size());
+            v.setError(checkValidWords);
+            return ResponseEntity.status(400).body(ApiResponse.success(400, "Từ không hợp lệ", v));
+        }
+        List<ListVocab> vocabs = words(uniqueVocabs);
+        v.setCountError(0);
+        v.setCountSuccess(uniqueVocabs.size());
+        vocabularyService.saveAll(vocabs);
+        return ResponseEntity.status(201).body(ApiResponse.success(201, "Tạo thành công danh sách vocab", v));
     }
 
-    @DeleteMapping("/image/{id}")
-    public ResponseEntity<ApiResponse<?>> deleteImageVocab(@PathVariable("id") int id){
-        try {
-            vocabularyService.deleteImageVocab(id);
-            return ResponseEntity.status(200).body(ApiResponse.success(200, "Xóa thành công ảnh từ vựng với id: "+id, null));
-        } catch (Exception e) {
-            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+    private List<ListVocab> removeDuplicateWords(List<ListVocab> list) {
+        Set<String> seenWords = new HashSet<>();
+        return list.stream()
+                .filter(listVocab -> seenWords.add(listVocab.getWord()))
+                .collect(Collectors.toList());
+    }
+
+    public List<ListVocab> words(List<ListVocab> list){
+        for (ListVocab vocab : list){
+            Map<String, Object> map = apiService.getWordDefinitionAsMap(vocab.getWord());
+            List<Map<String, Object>> pronunciationList = (List<Map<String, Object>>) map.get("pronunciation");
+            List<Map<String, Object>> definitionList = (List<Map<String, Object>>) map.get("definition");
+            vocab.setExampleSentence((String) definitionList.getFirst().get("text"));
+            vocab.setPronunciation((String) pronunciationList.getFirst().get("pron"));
+            vocab.setAudio((String) pronunciationList.getFirst().get("url"));
         }
+        return list;
     }
 
     private boolean isAudioFile(String contentType) {

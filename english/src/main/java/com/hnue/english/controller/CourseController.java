@@ -1,8 +1,11 @@
 package com.hnue.english.controller;
 
 import com.hnue.english.dto.CourseDTO;
+import com.hnue.english.dto.ListCourse;
+import com.hnue.english.dto.UserDTO;
 import com.hnue.english.model.Course;
 import com.hnue.english.response.ApiResponse;
+import com.hnue.english.response.ImportFromJson;
 import com.hnue.english.service.CourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
@@ -11,7 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/course")
@@ -64,12 +70,15 @@ public class CourseController {
     }
 
     @GetMapping("/page")
-    public ResponseEntity<ApiResponse<?>> getCourses(@RequestParam(defaultValue = "0") int page,
-                                                   @RequestParam(defaultValue = "1") int size){
+    public ResponseEntity<ApiResponse<?>> getCourses(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "1") int size,
+                                                     @RequestParam(required = false) String courseName,
+                                                     @RequestParam(required = false) String description,
+                                                     @RequestParam(required = false) String courseTarget,
+                                                     @RequestParam(required = false) String sort){
         if (size < 1){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "size phải lớn hơn 0", "Bad Request"));
         }
-        Page<Course> courses = courseService.getCourses(page, size);
+        Page<Course> courses = courseService.getCourses(page, size, courseName, description, courseTarget, sort);
         return ResponseEntity.status(200).body(ApiResponse.success(200, "", courses));
     }
 
@@ -105,5 +114,30 @@ public class CourseController {
         } catch (Exception e) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
         }
+    }
+
+    @PostMapping("/list")
+    public ResponseEntity<ApiResponse<?>> createList(@RequestBody List<ListCourse> list){
+        ImportFromJson c = new ImportFromJson();
+        List<ListCourse> uniqueCourses = removeDuplicateCourseNames(list);
+        List<String> existingCourseNames = courseService.checkExistingCourseNames(uniqueCourses);
+        if (!existingCourseNames.isEmpty()) {
+            c.setCountError(existingCourseNames.size());
+            c.setCountSuccess(uniqueCourses.size() - existingCourseNames.size());
+            c.setError(existingCourseNames);
+            return ResponseEntity.status(400).body(ApiResponse.success(400, "Đã tồi tại tên", c));
+        }else{
+            c.setCountError(0);
+            c.setCountSuccess(uniqueCourses.size());
+            courseService.saveAll(uniqueCourses);
+            return ResponseEntity.status(201).body(ApiResponse.success(201, "Tạo thành công danh sách course", c));
+        }
+    }
+
+    private List<ListCourse> removeDuplicateCourseNames(List<ListCourse> list) {
+        Set<String> seenCourseNames = new HashSet<>();
+        return list.stream()
+                .filter(listCourse -> seenCourseNames.add(listCourse.getCourseName()))
+                .collect(Collectors.toList());
     }
 }

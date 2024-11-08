@@ -1,5 +1,6 @@
 package com.hnue.english.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -29,8 +30,8 @@ public class Vocabulary {
     @Column(name = "pronunciation")
     private String pronunciation;
 
-    @Column(name = "image")
-    private String image;
+    @Column(name = "audio")
+    private String audio;
 
     @Column(name = "created_at")
     private Date createdAt;
@@ -38,6 +39,7 @@ public class Vocabulary {
     @Column(name = "updated_at")
     private Date updatedAt;
 
+    @JsonManagedReference
     @ManyToOne(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinColumn(name = "topic_id")
     private Topic topic;
