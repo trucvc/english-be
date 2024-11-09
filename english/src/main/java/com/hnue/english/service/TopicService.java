@@ -97,10 +97,14 @@ public class TopicService {
         return topicRepository.findAll(spec, pageable);
     }
 
-    public Topic updateTopic(int id, TopicDTO topicDTO){
+    public Topic updateTopic(int id, TopicDTO topicDTO, int courseId){
         Topic topic = topicRepository.getTopicWithVocabulary(id).orElseThrow(()-> new RuntimeException("Không tồn tại chủ đề với id: "+id));
         topic.setTopicName(topicDTO.getTopicName());
         topic.setDescription(topicDTO.getDescription());
+        if (courseId != 0){
+            Course course = courseService.getCourse(courseId);
+            course.add(topic);
+        }
         topic.setUpdatedAt(new Date());
         return topicRepository.save(topic);
     }

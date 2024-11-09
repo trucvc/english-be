@@ -52,7 +52,7 @@ public class VocabularyService {
             }
 
             if (meaning != null && !meaning.trim().isEmpty()) {
-                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("fullName"), "%" + meaning + "%"));
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("meaning"), "%" + meaning + "%"));
             }
 
             if (id != 0) {
@@ -94,15 +94,17 @@ public class VocabularyService {
         return vocabularyRepository.findAll();
     }
 
-    public Vocabulary updateVocab(int id, VocabDTO vocabDTO){
+    public Vocabulary updateVocab(int id, VocabDTO vocabDTO, int topicId){
         Vocabulary vocabulary = vocabularyRepository.findById(id).orElseThrow(()-> new RuntimeException("Không tồn tại từ vựng với id: "+id));
         vocabulary.setWord(vocabDTO.getWord());
         vocabulary.setMeaning(vocabDTO.getMeaning());
-        if (!vocabDTO.getPronunciation().isEmpty()){
-            firebaseStorageService.deleteFile(vocabulary.getPronunciation());
-            vocabulary.setPronunciation(vocabDTO.getPronunciation());
-        }
         vocabulary.setExampleSentence(vocabDTO.getExampleSentence());
+        vocabulary.setPronunciation(vocabDTO.getPronunciation());
+        vocabulary.setAudio(vocabDTO.getAudio());
+        if (topicId != 0){
+            Topic topic = topicService.getTopic(topicId);
+            topic.add(vocabulary);
+        }
         vocabulary.setUpdatedAt(new Date());
         return vocabularyRepository.save(vocabulary);
     }

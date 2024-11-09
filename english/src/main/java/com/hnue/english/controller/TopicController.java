@@ -86,9 +86,9 @@ public class TopicController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> updateTopic(@PathVariable int id, @RequestParam String topicName, @RequestParam String description,
-                                                      @RequestParam(defaultValue = "0") int order){
+                                                      @RequestParam(required = false, defaultValue = "0") int courseId){
         try {
-            if (topicName.isEmpty() || description.isEmpty() || order == 0){
+            if (topicName.isEmpty() || description.isEmpty()){
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
             }
             if (!topicService.preUpdateTopic(id, topicName)){
@@ -98,7 +98,7 @@ public class TopicController {
             }
             TopicDTO topicDTO = TopicDTO.builder()
                     .topicName(topicName).description(description).build();
-            Topic topic = topicService.updateTopic(id, topicDTO);
+            Topic topic = topicService.updateTopic(id, topicDTO, courseId);
             return ResponseEntity.status(201).body(ApiResponse.success(201, "", topic));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));

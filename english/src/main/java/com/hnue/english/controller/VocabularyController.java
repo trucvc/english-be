@@ -101,9 +101,9 @@ public class VocabularyController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> updateVocab(@PathVariable("id") int id, @RequestParam String word, @RequestParam String meaning,
-                                                      @RequestParam String exampleSentence, @RequestParam(required = false) MultipartFile pronunciation){
+                                                      @RequestParam(required = false, defaultValue = "0") int topicId){
         try {
-            if (word.isEmpty() || meaning.isEmpty() || exampleSentence.isEmpty()){
+            if (word.isEmpty() || meaning.isEmpty()){
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
             }
             if (!vocabularyService.preUpdateVocab(id, word)){
@@ -111,27 +111,21 @@ public class VocabularyController {
                     return ResponseEntity.status(400).body(ApiResponse.error(400, "Đã tồn tại từ vựng này", "Bad Request"));
                 }
             }
-            String url = "";
-            if (!pronunciation.isEmpty()){
-                try {
-                    url = firebaseStorageService.uploadFile(pronunciation);
-                } catch (Exception e) {
-                    return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
-                }
-            }
-            VocabDTO vocabDTO = new VocabDTO();
-            if (url.isEmpty()){
-                vocabDTO = VocabDTO.builder()
-                        .word(word).meaning(meaning).exampleSentence(exampleSentence).pronunciation("")
+            try {
+                Map<String, Object> map = apiService.getWordDefinitionAsMap(word);
+                List<Map<String, Object>> pronunciationList = (List<Map<String, Object>>) map.get("pronunciation");
+                List<Map<String, Object>> definitionList = (List<Map<String, Object>>) map.get("definition");
+                VocabDTO vocabDTO = VocabDTO.builder()
+                        .word(word).meaning(meaning)
+                        .exampleSentence((String) definitionList.getFirst().get("text"))
+                        .pronunciation((String) pronunciationList.getFirst().get("pron"))
+                        .audio((String) pronunciationList.getFirst().get("url"))
                         .build();
-            }else{
-                vocabDTO = VocabDTO.builder()
-                        .word(word).meaning(meaning).exampleSentence(exampleSentence).pronunciation(url)
-                        .build();
+                Vocabulary v = vocabularyService.updateVocab(id, vocabDTO, topicId);
+                return ResponseEntity.status(201).body(ApiResponse.success(201, "", v));
+            } catch (Exception e) {
+                return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
             }
-
-            Vocabulary vocabulary = vocabularyService.updateVocab(id, vocabDTO);
-            return ResponseEntity.status(201).body(ApiResponse.success(201, "", vocabulary));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
         }
