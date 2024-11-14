@@ -61,8 +61,8 @@ public class CourseController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAllCourse(){
-        List<Course> courses = courseService.getAllCourse();
-        if (courses == null){
+        List<Course> courses = courseService.getAllWithTopicsAndVocabsOrderedByCourseName();
+        if (courses.isEmpty()){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Không có khóa học nào!", "Bad Request"));
         }else{
             return ResponseEntity.status(200).body(ApiResponse.success(200, "", courses));

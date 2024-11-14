@@ -139,7 +139,7 @@ public class UserController {
 
     @PostMapping ("/register")
     public ResponseEntity<?> register(@RequestParam String email,
-                                      @RequestParam String password,
+                                      @RequestParam String password,    
                                       @RequestParam String fullName){
         try {
             if (email.isEmpty() || password.isEmpty() || fullName.isEmpty()){

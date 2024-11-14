@@ -64,7 +64,7 @@ public class TopicController {
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAllTopic(){
         List<Topic> topics = topicService.getAllTopic();
-        if (topics == null){
+        if (topics.isEmpty()){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Không có chủ đề nào!", "Bad Request"));
         }else{
             return ResponseEntity.status(200).body(ApiResponse.success(200, "", topics));

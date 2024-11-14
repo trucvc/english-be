@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CourseRepository extends JpaRepository<Course, Integer>, JpaSpecificationExecutor<Course> {
@@ -13,4 +14,10 @@ public interface CourseRepository extends JpaRepository<Course, Integer>, JpaSpe
     Optional<Course> getCourseWithTopic(@Param("id") int id);
 
     boolean existsByCourseName(String courseName);
+
+    @Query("SELECT c FROM Course c " +
+            "JOIN c.topics t " +
+            "WHERE EXISTS (SELECT v FROM Vocabulary v WHERE v.topic = t) " +
+            "ORDER BY c.courseName ASC")
+    List<Course> findAllWithTopicsAndVocabsOrderedByCourseName();
 }

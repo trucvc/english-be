@@ -43,8 +43,8 @@ public class CourseService {
         return course;
     }
 
-    public List<Course> getAllCourse(){
-        return courseRepository.findAll();
+    public List<Course> getAllWithTopicsAndVocabsOrderedByCourseName(){
+        return courseRepository.findAllWithTopicsAndVocabsOrderedByCourseName();
     }
 
     public Page<Course> getCourses(int page, int size, String courseName, String description, String courseTarget, String sort){

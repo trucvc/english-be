@@ -69,7 +69,7 @@ public class VocabularyController {
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAllVocab(){
         List<Vocabulary> vocabularies = vocabularyService.getAllVocab();
-        if (vocabularies == null){
+        if (vocabularies.isEmpty()){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Không có từ vựng nào!", "Bad Request"));
         }else{
             return ResponseEntity.status(200).body(ApiResponse.success(200, "", vocabularies));
