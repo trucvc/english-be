@@ -11,9 +11,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
@@ -47,6 +44,10 @@ public class UserController {
         String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
         if (!email.matches(emailRegex)) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Email không hợp lệ", "Bad Request"));
+        }
+        String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}$";
+        if (!password.matches(passwordRegex)) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, "Mật khẩu phải có ít nhất một chữ hoa, một chữ thường, một chữ số, một ký tự đặc biệt và tối thiểu 8 ký tự", "Bad Request"));
         }
         if (userService.existsByEmail(email)){
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Email này đã tồn tại", "Bad Request"));
@@ -98,6 +99,12 @@ public class UserController {
             if (fullName.isEmpty() || role.isEmpty() || subscriptionPlan.isEmpty()){
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
             }
+            if (!password.isEmpty()){
+                String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}$";
+                if (!password.matches(passwordRegex)) {
+                    return ResponseEntity.status(400).body(ApiResponse.error(400, "Mật khẩu phải có ít nhất một chữ hoa, một chữ thường, một chữ số, một ký tự đặc biệt và tối thiểu 8 ký tự", "Bad Request"));
+                }
+            }
             UserDTO userDTO = UserDTO.builder()
                     .password(password)
                     .fullName(fullName).subscriptionPlan(subscriptionPlan)
@@ -141,6 +148,10 @@ public class UserController {
             String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
             if (!email.matches(emailRegex)) {
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Email không hợp lệ", "Bad Request"));
+            }
+            String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}$";
+            if (!password.matches(passwordRegex)) {
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Mật khẩu phải có ít nhất một chữ hoa, một chữ thường, một chữ số, một ký tự đặc biệt và tối thiểu 8 ký tự", "Bad Request"));
             }
             UserDTO userDTO = new UserDTO();
             userDTO.setEmail(email);
