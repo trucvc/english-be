@@ -181,6 +181,19 @@ public class UserController {
             u.setError(email);
             return ResponseEntity.status(400).body(ApiResponse.success(400, "Email không hợp lệ", u));
         }
+        String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}$";
+        List<String> pass = new ArrayList<>();
+        for (UserDTO dto : list){
+            if (!dto.getPassword().matches(passwordRegex)){
+                pass.add(dto.getPassword());
+            }
+        }
+        if (!pass.isEmpty()){
+            u.setCountError(pass.size());
+            u.setCountSuccess(uniqueUsers.size() - pass.size());
+            u.setError(pass);
+            return ResponseEntity.status(400).body(ApiResponse.success(400, "Mật khẩu phải có ít nhất một chữ hoa, một chữ thường, một chữ số, một ký tự đặc biệt và tối thiểu 8 ký tự", u));
+        }
         List<String> existingEmails = userService.checkExistingEmails(uniqueUsers);
         if (!existingEmails.isEmpty()) {
             u.setCountError(existingEmails.size());

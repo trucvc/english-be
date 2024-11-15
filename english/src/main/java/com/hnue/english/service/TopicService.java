@@ -9,6 +9,8 @@ import com.hnue.english.model.Topic;
 import com.hnue.english.model.Vocabulary;
 import com.hnue.english.repository.TopicRepository;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -49,6 +51,63 @@ public class TopicService {
     public List<Topic> getAllTopic(){
         return topicRepository.findAll();
     }
+
+    public List<Topic> getAllWithVocabs(String topicName, String description, int courseId, String sort) {
+        Specification<Topic> spec = (root, query, criteriaBuilder) -> {
+            var predicates = criteriaBuilder.conjunction();
+
+            if (topicName != null && !topicName.trim().isEmpty()) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("topicName"), "%" + topicName + "%"));
+            }
+
+            if (description != null && !description.trim().isEmpty()) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("description"), "%" + description + "%"));
+            }
+
+            if (courseId != 0) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.join("course", JoinType.INNER).get("id"), courseId));
+            }
+
+            Subquery<Integer> vocabularySubquery = query.subquery(Integer.class);
+            Root<Vocabulary> vocabularyRoot = vocabularySubquery.from(Vocabulary.class);
+
+            vocabularySubquery.select(vocabularyRoot.get("id"))
+                    .where(criteriaBuilder.equal(vocabularyRoot.get("topic"), root));
+
+            predicates = criteriaBuilder.and(predicates, criteriaBuilder.exists(vocabularySubquery));
+
+            query.where(predicates);
+
+            if (sort != null && !sort.trim().isEmpty()) {
+                switch (sort) {
+                    case "topicName":
+                        query.orderBy(criteriaBuilder.asc(root.get("topicName")));
+                        break;
+                    case "-topicName":
+                        query.orderBy(criteriaBuilder.desc(root.get("topicName")));
+                        break;
+                    case "description":
+                        query.orderBy(criteriaBuilder.asc(root.get("description")));
+                        break;
+                    case "-description":
+                        query.orderBy(criteriaBuilder.desc(root.get("description")));
+                        break;
+                    case "updatedAt":
+                        query.orderBy(criteriaBuilder.asc(root.get("updatedAt")));
+                        break;
+                    case "-updatedAt":
+                        query.orderBy(criteriaBuilder.desc(root.get("updatedAt")));
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return predicates;
+        };
+        return topicRepository.findAll(spec);
+    }
+
 
     public Page<Topic> getTopics(int page, int size, String topicName, String description, int id, String sort){
         Specification<Topic> spec = (root, query, criteriaBuilder) -> {

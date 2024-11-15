@@ -71,6 +71,19 @@ public class TopicController {
         }
     }
 
+    @GetMapping("/user")
+    public ResponseEntity<ApiResponse<?>> getAllTopicForUser(@RequestParam(required = false) String topicName,
+                                                             @RequestParam(required = false) String description,
+                                                             @RequestParam(required = false, defaultValue = "0") int id,
+                                                             @RequestParam(required = false) String sort){
+        List<Topic> topics = topicService.getAllWithVocabs(topicName, description, id, sort);
+        if (topics.isEmpty()){
+            return ResponseEntity.status(400).body(ApiResponse.error(400, "Không có chủ đề nào!", "Bad Request"));
+        }else{
+            return ResponseEntity.status(200).body(ApiResponse.success(200, "", topics));
+        }
+    }
+
     @GetMapping("/page")
     public ResponseEntity<ApiResponse<?>> getTopics(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "1") int size,
                                                     @RequestParam(required = false) String topicName,

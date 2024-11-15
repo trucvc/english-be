@@ -76,6 +76,19 @@ public class VocabularyController {
         }
     }
 
+    @GetMapping("/user")
+    public ResponseEntity<ApiResponse<?>> getAllVocabForUser(@RequestParam(required = false) String word,
+                                                             @RequestParam(required = false) String meaning,
+                                                             @RequestParam(required = false, defaultValue = "0") int id,
+                                                             @RequestParam(required = false) String sort){
+        List<Vocabulary> vocabularies = vocabularyService.getAllVocabs(word, meaning, id, sort);
+        if (vocabularies.isEmpty()){
+            return ResponseEntity.status(400).body(ApiResponse.error(400, "Không có từ vựng nào!", "Bad Request"));
+        }else{
+            return ResponseEntity.status(200).body(ApiResponse.success(200, "", vocabularies));
+        }
+    }
+
     @GetMapping("/page")
     public ResponseEntity<ApiResponse<?>> getVocabs(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "1") int size,
                                                     @RequestParam(required = false) String word,

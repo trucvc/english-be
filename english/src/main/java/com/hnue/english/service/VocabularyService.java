@@ -43,6 +43,52 @@ public class VocabularyService {
         return vocabulary;
     }
 
+    public List<Vocabulary> getAllVocabs(String word, String meaning, int id, String sort){
+        Specification<Vocabulary> spec = (root, query, criteriaBuilder) -> {
+            var predicates= criteriaBuilder.conjunction();
+
+            if (word != null && !word.trim().isEmpty()) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("word"), "%" + word + "%"));
+            }
+
+            if (meaning != null && !meaning.trim().isEmpty()) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("meaning"), "%" + meaning + "%"));
+            }
+
+            if (id != 0) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.join("topic", JoinType.INNER).get("id"), id));
+            }
+
+            if (sort != null && !sort.trim().isEmpty()) {
+                switch (sort) {
+                    case "word":
+                        query.orderBy(criteriaBuilder.asc(root.get("word")));
+                        break;
+                    case "-word":
+                        query.orderBy(criteriaBuilder.desc(root.get("word")));
+                        break;
+                    case "meaning":
+                        query.orderBy(criteriaBuilder.asc(root.get("meaning")));
+                        break;
+                    case "-meaning":
+                        query.orderBy(criteriaBuilder.desc(root.get("meaning")));
+                        break;
+                    case "updatedAt":
+                        query.orderBy(criteriaBuilder.asc(root.get("updatedAt")));
+                        break;
+                    case "-updatedAt":
+                        query.orderBy(criteriaBuilder.desc(root.get("updatedAt")));
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return predicates;
+        };
+        return vocabularyRepository.findAll(spec);
+    }
+
     public Page<Vocabulary> getVocabs(int page, int size, String word, String meaning, int id, String sort){
         Specification<Vocabulary> spec = (root, query, criteriaBuilder) -> {
             var predicates= criteriaBuilder.conjunction();

@@ -7,7 +7,11 @@ import com.hnue.english.dto.UserDTO;
 import com.hnue.english.model.Course;
 import com.hnue.english.model.Topic;
 import com.hnue.english.model.User;
+import com.hnue.english.model.Vocabulary;
 import com.hnue.english.repository.CourseRepository;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -43,9 +47,65 @@ public class CourseService {
         return course;
     }
 
-    public List<Course> getAllWithTopicsAndVocabsOrderedByCourseName(){
-        return courseRepository.findAllWithTopicsAndVocabsOrderedByCourseName();
+    public List<Course> getAllCourses(){
+        return courseRepository.findAll();
     }
+
+    public List<Course> getAllWithTopicsAndVocabsOrderedByCourseName(String courseName, String description, String courseTarget, String sort) {
+        Specification<Course> spec = (root, query, criteriaBuilder) -> {
+            var predicates = criteriaBuilder.conjunction();
+
+            // Lọc theo courseName, description, courseTarget
+            if (courseName != null && !courseName.trim().isEmpty()) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("courseName"), "%" + courseName + "%"));
+            }
+
+            if (description != null && !description.trim().isEmpty()) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("description"), "%" + description + "%"));
+            }
+
+            if (courseTarget != null && !courseTarget.trim().isEmpty()) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.like(root.get("courseTarget"), "%" + courseTarget + "%"));
+            }
+
+            var topicsJoin = root.join("topics", JoinType.INNER);
+            Subquery<Integer> subquery = query.subquery(Integer.class);
+            Root<Vocabulary> vocabularyRoot = subquery.from(Vocabulary.class);
+
+            subquery.select(vocabularyRoot.get("id"))
+                    .where(criteriaBuilder.equal(vocabularyRoot.get("topic"), topicsJoin));
+
+            predicates = criteriaBuilder.and(predicates, criteriaBuilder.exists(subquery));
+
+            query.where(predicates);
+
+            if (sort != null && !sort.trim().isEmpty()) {
+                if (sort.equals("courseName")) {
+                    query.orderBy(criteriaBuilder.asc(root.get("courseName")));
+                } else if (sort.equals("-courseName")) {
+                    query.orderBy(criteriaBuilder.desc(root.get("courseName")));
+                } else if (sort.equals("description")) {
+                    query.orderBy(criteriaBuilder.asc(root.get("description")));
+                } else if (sort.equals("-description")) {
+                    query.orderBy(criteriaBuilder.desc(root.get("description")));
+                } else if (sort.equals("courseTarget")) {
+                    query.orderBy(criteriaBuilder.asc(root.get("courseTarget")));
+                } else if (sort.equals("-courseTarget")) {
+                    query.orderBy(criteriaBuilder.desc(root.get("courseTarget")));
+                } else if (sort.equals("updatedAt")) {
+                    query.orderBy(criteriaBuilder.asc(root.get("updatedAt")));
+                } else if (sort.equals("-updatedAt")) {
+                    query.orderBy(criteriaBuilder.desc(root.get("updatedAt")));
+                }
+            } else {
+                query.orderBy(criteriaBuilder.asc(root.get("courseName")));
+            }
+            return predicates;
+        };
+
+        return courseRepository.findAll(spec);
+    }
+
 
     public Page<Course> getCourses(int page, int size, String courseName, String description, String courseTarget, String sort){
         Specification<Course> spec = (root, query, criteriaBuilder) -> {
