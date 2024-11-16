@@ -222,4 +222,8 @@ public class CourseService {
         course.setUpdatedAt(new Date());
         return course;
     }
+
+    public List<Course> getAllCourseWithTopic(){
+        return courseRepository.findAllCourseWithTopic();
+    }
 }

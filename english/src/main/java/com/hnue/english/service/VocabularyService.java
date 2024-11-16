@@ -1,9 +1,7 @@
 package com.hnue.english.service;
 
-import com.hnue.english.dto.ListTopic;
 import com.hnue.english.dto.ListVocab;
 import com.hnue.english.dto.VocabDTO;
-import com.hnue.english.model.Course;
 import com.hnue.english.model.Topic;
 import com.hnue.english.model.Vocabulary;
 import com.hnue.english.repository.VocabularyRepository;

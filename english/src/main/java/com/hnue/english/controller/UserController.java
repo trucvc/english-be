@@ -3,9 +3,7 @@ package com.hnue.english.controller;
 import com.hnue.english.dto.UserDTO;
 import com.hnue.english.dto.VocabReview;
 import com.hnue.english.dto.VocabSelected;
-import com.hnue.english.model.User;
-import com.hnue.english.model.UserProgress;
-import com.hnue.english.model.Vocabulary;
+import com.hnue.english.model.*;
 import com.hnue.english.response.ApiResponse;
 import com.hnue.english.response.ImportFromJson;
 import com.hnue.english.response.LoginResponse;
@@ -16,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +26,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final CourseService courseService;
+    private final TopicService topicService;
     private final VocabularyService vocabularyService;
     private final UserProgressService userProgressService;
     private final CourseProgressService courseProgressService;
@@ -316,6 +317,23 @@ public class UserController {
                 return ResponseEntity.status(400).body(ApiResponse.success(400, "Đã tồn tại vocab với id", v));
             }
             List<UserProgress> us = userProgressService.saveAllVocabForUser(user, vocabularies);
+
+            List<Topic> topics = topicService.getAllTopicWithVocab();
+            for (Topic topic : topics){
+                List<Vocabulary> vocab = topic.getVocabularies();
+                if (userProgressService.allVocabulariesAssignedToUser(user, vocab)){
+                    topicProgressService.createTopicProgressIfNotExist(user, topic, 1, new Date());
+                }
+            }
+
+            List<Course> courses = courseService.getAllCourseWithTopic();
+            for (Course course : courses){
+                List<Topic> topic = course.getTopics();
+                if (topicProgressService.allTopicAssignedToUser(user, topic)){
+                    courseProgressService.createCourseProgressIfNotExist(user, course, 1, new Date());
+                }
+            }
+
             return ResponseEntity.status(200).body(ApiResponse.success(200, "Selected vocabulary saved for review", us));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
@@ -382,6 +400,34 @@ public class UserController {
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Bạn chưa có từ vựng nào", "Bad Request"));
             }else{
                 return ResponseEntity.status(200).body(ApiResponse.success(200, "", level));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+        }
+    }
+
+    @GetMapping("/course_progress")
+    public ResponseEntity<ApiResponse<?>> courseProgress(HttpServletRequest request){
+        try {
+            List<CourseProgress> courseProgresses = courseProgressService.getAllCourseProgress();
+            if (courseProgresses.isEmpty()){
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Chưa có khóa học nào hoàn thành", "Bad Request"));
+            }else{
+                return ResponseEntity.status(200).body(ApiResponse.success(200, "", courseProgresses));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+        }
+    }
+
+    @GetMapping("/topic_progress")
+    public ResponseEntity<ApiResponse<?>> topicProgress(HttpServletRequest request){
+        try {
+            List<TopicProgress> topicProgresses = topicProgressService.getAllTopicProgress();
+            if (topicProgresses.isEmpty()){
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Chưa có chủ đề nào hoàn thành", "Bad Request"));
+            }else{
+                return ResponseEntity.status(200).body(ApiResponse.success(200, "", topicProgresses));
             }
         } catch (Exception e) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));

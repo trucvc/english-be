@@ -1,11 +1,11 @@
 package com.hnue.english.service;
 
-import com.hnue.english.model.Topic;
 import com.hnue.english.model.User;
 import com.hnue.english.model.UserProgress;
 import com.hnue.english.model.Vocabulary;
 import com.hnue.english.repository.UserProgressRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -111,5 +111,55 @@ public class UserProgressService {
 
     public boolean isVocabExistForUser(User user, Vocabulary vocab) {
         return userProgressRepository.existsByUserAndVocabulary(user, vocab);
+    }
+
+    public boolean allVocabulariesAssignedToUser(User user, List<Vocabulary> vocabularies) {
+        for (Vocabulary vocab : vocabularies) {
+            Optional<UserProgress> userProgress = userProgressRepository.getUserProgress(user, vocab);
+            if (userProgress.isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void deleteUserProgress(UserProgress userProgress){
+        userProgressRepository.delete(userProgress);
+    }
+
+    @Scheduled(fixedDelay = 5000)
+    public void getAllUserProgress(){
+        List<UserProgress> list = userProgressRepository.findAll();
+        for (UserProgress us : list){
+            Date now = new Date();
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(us.getLastReviewed());
+            if (us.getLevel() == 1){
+                calendar.add(Calendar.DAY_OF_MONTH, 1);
+                if (calendar.getTime().before(now)){
+                    deleteUserProgress(us);
+                }
+            } else if (us.getLevel() == 2) {
+                calendar.add(Calendar.DAY_OF_MONTH, 3);
+                if (calendar.getTime().before(now)){
+                    updateUserProgress(us, 0);
+                }
+            } else if (us.getLevel() == 3) {
+                calendar.add(Calendar.DAY_OF_MONTH, 7);
+                if (calendar.getTime().before(now)){
+                    updateUserProgress(us, 0);
+                }
+            } else if (us.getLevel() == 4) {
+                calendar.add(Calendar.DAY_OF_MONTH, 14);
+                if (calendar.getTime().before(now)){
+                    updateUserProgress(us, 0);
+                }
+            } else {
+                calendar.add(Calendar.MONTH, 1);
+                if (calendar.getTime().before(now)){
+                    updateUserProgress(us, 0);
+                }
+            }
+        }
     }
 }

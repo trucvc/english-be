@@ -1,6 +1,7 @@
 package com.hnue.english.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -37,6 +38,7 @@ public class Course {
     @OneToMany(mappedBy = "course", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     private List<Topic> topics;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
     private List<CourseProgress> courseProgresses;
 

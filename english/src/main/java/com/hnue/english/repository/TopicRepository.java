@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface TopicRepository extends JpaRepository<Topic, Integer>, JpaSpecificationExecutor<Topic> {
@@ -15,4 +16,7 @@ public interface TopicRepository extends JpaRepository<Topic, Integer>, JpaSpeci
     boolean existsByTopicName(String topicName);
 
     boolean existsByDescription(String description);
+
+    @Query("SELECT t FROM Topic t JOIN FETCH t.vocabularies")
+    List<Topic> findAllTopicWithVocab();
 }

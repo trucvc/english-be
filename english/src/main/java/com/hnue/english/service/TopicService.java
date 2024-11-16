@@ -265,4 +265,8 @@ public class TopicService {
         topic.setUpdatedAt(new Date());
         return topic;
     }
+
+    public List<Topic> getAllTopicWithVocab(){
+        return topicRepository.findAllTopicWithVocab();
+    }
 }
