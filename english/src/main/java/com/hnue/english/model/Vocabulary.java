@@ -1,5 +1,6 @@
 package com.hnue.english.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -44,6 +45,7 @@ public class Vocabulary {
     @JoinColumn(name = "topic_id")
     private Topic topic;
 
+    @JsonBackReference
     @OneToMany(mappedBy = "vocabulary", cascade = CascadeType.ALL)
     private List<UserProgress> userProgresses;
 

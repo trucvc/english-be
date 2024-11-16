@@ -43,6 +43,9 @@ public class Topic {
     @OneToMany(mappedBy = "topic", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     private List<Vocabulary> vocabularies;
 
+    @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL)
+    private List<TopicProgress> topicProgresses;
+
     public Topic(){
 
     }
@@ -58,5 +61,13 @@ public class Topic {
         }
         vocabularies.add(vocabulary);
         vocabulary.setTopic(this);
+    }
+
+    public void addTopicProgress(TopicProgress theTopicProgress){
+        if (topicProgresses == null){
+            topicProgresses = new ArrayList<>();
+        }
+        topicProgresses.add(theTopicProgress);
+        theTopicProgress.setTopic(this);
     }
 }

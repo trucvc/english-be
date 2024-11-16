@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -305,5 +306,16 @@ public class UserService {
         user.setCreatedAt(new Date());
         user.setUpdatedAt(new Date());
         return user;
+    }
+
+    @Scheduled(fixedDelay = 5000)
+    public void getAllUser(){
+        List<User> users = userRepository.getAllUser();
+        for (User u : users){
+            if (u.getSubscriptionEndDate().before(new Date())){
+                u.setSubscriptionPlan("none");
+                userRepository.save(u);
+            }
+        }
     }
 }

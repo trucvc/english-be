@@ -1,11 +1,15 @@
 package com.hnue.english.controller;
 
 import com.hnue.english.dto.UserDTO;
+import com.hnue.english.dto.VocabReview;
+import com.hnue.english.dto.VocabSelected;
 import com.hnue.english.model.User;
+import com.hnue.english.model.UserProgress;
+import com.hnue.english.model.Vocabulary;
 import com.hnue.english.response.ApiResponse;
 import com.hnue.english.response.ImportFromJson;
 import com.hnue.english.response.LoginResponse;
-import com.hnue.english.service.UserService;
+import com.hnue.english.service.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,10 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -26,7 +27,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
-//    private final PagedResourcesAssembler<User> pagedResourcesAssembler;
+    private final VocabularyService vocabularyService;
+    private final UserProgressService userProgressService;
+    private final CourseProgressService courseProgressService;
+    private final TopicProgressService topicProgressService;
 
     @InitBinder
     public void initBinder(WebDataBinder dataBinder) {
@@ -87,7 +91,6 @@ public class UserController {
             return ResponseEntity.status(400).body(ApiResponse.error(400, "size phải lớn hơn 0", "Bad Request"));
         }
         Page<User> users = userService.getUsers(page, size, email, fullName, role, subscriptionPlan, sort);
-//        PagedModel<EntityModel<User>> pagedModel = pagedResourcesAssembler.toModel(users);
         return ResponseEntity.status(200).body(ApiResponse.success(200, "", users));
     }
 
@@ -260,5 +263,128 @@ public class UserController {
         return userDTOList.stream()
                 .filter(userDTO -> seenEmails.add(userDTO.getEmail()))
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping("/learned_vocabulary")
+    public ResponseEntity<ApiResponse<?>> getAllVocabForUser(HttpServletRequest request){
+        try {
+            String authHeader = request.getHeader("Authorization");
+            String token = authHeader.substring(7);
+            User user = userService.fetch(token);
+            List<Vocabulary> vocabularies = new ArrayList<>();
+            for (UserProgress us : userProgressService.getAllVocabForUser(user)){
+                vocabularies.add(us.getVocabulary());
+            }
+            if (vocabularies.isEmpty()){
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Bạn chưa có từ vựng để ôn tập", "Bad Request"));
+            }else{
+                return ResponseEntity.status(200).body(ApiResponse.success(200, "", vocabularies));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+        }
+    }
+
+    @PostMapping("/selected_vocab")
+    public ResponseEntity<ApiResponse<?>> saveAllVocabForUser(HttpServletRequest request, @RequestBody VocabSelected list){
+        try {
+            String authHeader = request.getHeader("Authorization");
+            String token = authHeader.substring(7);
+            User user = userService.fetch(token);
+            List<String> existingVocab = vocabularyService.checkExistingIds(list.getId());
+            ImportFromJson v = new ImportFromJson();
+            if (!existingVocab.isEmpty()){
+                v.setCountError(existingVocab.size());
+                v.setCountSuccess(list.getId().size() - existingVocab.size());
+                v.setError(existingVocab);
+                return ResponseEntity.status(400).body(ApiResponse.success(400, "Không tồn tại vocab với id", v));
+            }
+            List<Vocabulary> vocabularies = new ArrayList<>();
+            for (int id : list.getId()){
+                vocabularies.add(vocabularyService.getVocab(id));
+            }
+            List<String> existingUserVocab = new ArrayList<>();
+            for (Vocabulary vo : vocabularies){
+                if (userProgressService.isVocabExistForUser(user, vo)){
+                    existingUserVocab.add(String.valueOf(vo.getId()));
+                }
+            }
+            if (!existingUserVocab.isEmpty()){
+                v.setCountError(existingUserVocab.size());
+                v.setCountSuccess(list.getId().size() - existingUserVocab.size());
+                v.setError(existingUserVocab);
+                return ResponseEntity.status(400).body(ApiResponse.success(400, "Đã tồn tại vocab với id", v));
+            }
+            List<UserProgress> us = userProgressService.saveAllVocabForUser(user, vocabularies);
+            return ResponseEntity.status(200).body(ApiResponse.success(200, "Selected vocabulary saved for review", us));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+        }
+    }
+
+    @GetMapping("/review_stats")
+    public ResponseEntity<ApiResponse<?>> countLevelsByUser(HttpServletRequest request){
+        try {
+            String authHeader = request.getHeader("Authorization");
+            String token = authHeader.substring(7);
+            User user = userService.fetch(token);
+            Map<Integer, Long> level = new HashMap<>();
+            level = userProgressService.countLevelsByUser(user);
+            if (level.isEmpty()){
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Ban chưa học từ nào", "Bad Request"));
+            }else{
+                return ResponseEntity.status(200).body(ApiResponse.success(200, "", level));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+        }
+    }
+
+    @GetMapping("/review_vocab")
+    public ResponseEntity<ApiResponse<?>> reviewVocabByUser(HttpServletRequest request){
+        try {
+            String authHeader = request.getHeader("Authorization");
+            String token = authHeader.substring(7);
+            User user = userService.fetch(token);
+            List<UserProgress> us = userProgressService.getAllVocabForUserWithExam(user);
+            if (us.isEmpty()){
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Bạn chưa có từ vựng để ôn tập", "Bad Request"));
+            }else{
+                return ResponseEntity.status(200).body(ApiResponse.success(200, "", us));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+        }
+    }
+
+    @PostMapping("/complete_review")
+    public ResponseEntity<ApiResponse<?>> completeReview(HttpServletRequest request, @RequestBody VocabReview review){
+        try {
+            String authHeader = request.getHeader("Authorization");
+            String token = authHeader.substring(7);
+            User user = userService.fetch(token);
+            Vocabulary vocabulary = vocabularyService.getVocab(review.getId());
+            UserProgress us = userProgressService.getUserProgress(user, vocabulary);
+            return ResponseEntity.status(200).body(ApiResponse.success(200, "", userProgressService.updateUserProgress(us, review.getStatus())));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+        }
+    }
+
+    @GetMapping("/wordbook")
+    public ResponseEntity<ApiResponse<?>> wordbook(HttpServletRequest request){
+        try {
+            String authHeader = request.getHeader("Authorization");
+            String token = authHeader.substring(7);
+            User user = userService.fetch(token);
+            Map<Integer, List<UserProgress>> level = userProgressService.getUserProgressByLevel(user);
+            if (level.isEmpty()){
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Bạn chưa có từ vựng nào", "Bad Request"));
+            }else{
+                return ResponseEntity.status(200).body(ApiResponse.success(200, "", level));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+        }
     }
 }

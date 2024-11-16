@@ -37,6 +37,9 @@ public class Course {
     @OneToMany(mappedBy = "course", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     private List<Topic> topics;
 
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
+    private List<CourseProgress> courseProgresses;
+
     public Course(){
 
     }
@@ -53,5 +56,13 @@ public class Course {
         }
         topics.add(topic);
         topic.setCourse(this);
+    }
+
+    public void addCourseProgress(CourseProgress theCourseProgress){
+        if (courseProgresses == null){
+            courseProgresses = new ArrayList<>();
+        }
+        courseProgresses.add(theCourseProgress);
+        theCourseProgress.setCourse(this);
     }
 }

@@ -1,5 +1,6 @@
 package com.hnue.english.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -52,9 +53,15 @@ public class User implements UserDetails{
     @Column(name = "updated_at")
     private Date updatedAt;
 
-    @JsonManagedReference
+    @JsonBackReference
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserProgress> userProgresses;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<CourseProgress> courseProgresses;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<TopicProgress> topicProgresses;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
@@ -120,6 +127,22 @@ public class User implements UserDetails{
         }
         userProgresses.add(theUserProgress);
         theUserProgress.setUser(this);
+    }
+
+    public void addCourseProgress(CourseProgress theCourseProgress){
+        if (courseProgresses == null){
+            courseProgresses = new ArrayList<>();
+        }
+        courseProgresses.add(theCourseProgress);
+        theCourseProgress.setUser(this);
+    }
+
+    public void addTopicProgress(TopicProgress theTopicProgress){
+        if (topicProgresses == null){
+            topicProgresses = new ArrayList<>();
+        }
+        topicProgresses.add(theTopicProgress);
+        theTopicProgress.setUser(this);
     }
 
     public void addFolder(Folder theFolder){

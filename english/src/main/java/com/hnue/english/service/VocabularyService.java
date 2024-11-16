@@ -169,6 +169,15 @@ public class VocabularyService {
         return vocabularyRepository.existsByWord(word);
     }
 
+    public boolean existsById(int id){return vocabularyRepository.existsById(id);}
+
+    public List<String> checkExistingIds(List<Integer> list) {
+        return list.stream()
+                .filter(id -> !existsById(id))
+                .map(String::valueOf)
+                .collect(Collectors.toList());
+    }
+
     public List<String> checkExistingWords(List<ListVocab> list) {
         return list.stream()
                 .filter(listVocab -> existsByWord(listVocab.getWord()))
