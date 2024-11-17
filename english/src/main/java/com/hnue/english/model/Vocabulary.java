@@ -49,6 +49,7 @@ public class Vocabulary {
     @OneToMany(mappedBy = "vocabulary", cascade = CascadeType.ALL)
     private List<UserProgress> userProgresses;
 
+    @JsonBackReference
     @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinTable(name = "folder_vocabulary",
                 joinColumns = @JoinColumn(name = "vocab_id"),

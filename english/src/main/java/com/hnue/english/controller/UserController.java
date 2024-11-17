@@ -5,6 +5,7 @@ import com.hnue.english.dto.VocabReview;
 import com.hnue.english.dto.VocabSelected;
 import com.hnue.english.model.*;
 import com.hnue.english.response.ApiResponse;
+import com.hnue.english.response.ExamResponse;
 import com.hnue.english.response.ImportFromJson;
 import com.hnue.english.response.LoginResponse;
 import com.hnue.english.service.*;
@@ -365,10 +366,16 @@ public class UserController {
             String token = authHeader.substring(7);
             User user = userService.fetch(token);
             List<UserProgress> us = userProgressService.getAllVocabForUserWithExam(user);
-            if (us.isEmpty()){
+            List<ExamResponse> exam = new ArrayList<>();
+            for (UserProgress u : us){
+                List<Vocabulary> incorrect = vocabularyService.getTwoRandomVocabs(u.getVocabulary());
+                ExamResponse ex = new ExamResponse(random(), u.getVocabulary(), incorrect);
+                exam.add(ex);
+            }
+            if (exam.isEmpty()){
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Bạn chưa có từ vựng để ôn tập", "Bad Request"));
             }else{
-                return ResponseEntity.status(200).body(ApiResponse.success(200, "", us));
+                return ResponseEntity.status(200).body(ApiResponse.success(200, "", exam));
             }
         } catch (Exception e) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
@@ -432,5 +439,10 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
         }
+    }
+
+    public int random(){
+        Random random = new Random();
+        return random.nextInt(6)+1;
     }
 }

@@ -204,4 +204,8 @@ public class VocabularyService {
         vocabulary.setUpdatedAt(new Date());
         return vocabulary;
     }
+
+    public List<Vocabulary> getTwoRandomVocabs(Vocabulary vocabulary){
+        return vocabularyRepository.findTwoRandomVocabs(vocabulary.getId(), vocabulary.getTopic().getId());
+    }
 }

@@ -63,7 +63,7 @@ public class User implements UserDetails{
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<TopicProgress> topicProgresses;
 
-    @JsonManagedReference
+    @JsonBackReference
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Folder> folders;
 

@@ -1,5 +1,6 @@
 package com.hnue.english.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -22,10 +23,12 @@ public class Folder {
     @Column(name = "description")
     private String description;
 
+    @JsonManagedReference
     @ManyToOne(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinColumn(name = "user_id")
     private User user;
 
+    @JsonManagedReference
     @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinTable(name = "folder_vocabulary",
                 joinColumns = @JoinColumn(name = "folder_id"),

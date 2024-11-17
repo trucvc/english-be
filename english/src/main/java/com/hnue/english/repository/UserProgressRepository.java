@@ -17,7 +17,7 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, Inte
     @Query("SELECT us.level, COUNT(us) FROM UserProgress us WHERE us.user = :user GROUP BY us.level")
     List<Object[]> countLevelsByUser(@Param("user") User user);
 
-    @Query(value = "SELECT * FROM user_progress us WHERE us.user_id = :userId AND CURRENT_TIMESTAMP < us.next_review ORDER BY RAND() LIMIT 10", nativeQuery = true)
+    @Query(value = "SELECT * FROM user_progress us WHERE us.user_id = :userId ORDER BY RAND() LIMIT 10", nativeQuery = true)
     List<UserProgress> findAllVocabForUserWithExam(@Param("userId") int userId);
 
     @Query("SELECT us FROM UserProgress us WHERE us.user = :user AND us.vocabulary = :vocab")
