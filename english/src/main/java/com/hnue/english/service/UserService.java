@@ -146,6 +146,9 @@ public class UserService {
     public User updateUser(int id, UserDTO userDTO){
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + id));
         if (!(userDTO.getPassword() == null || userDTO.getPassword().isBlank())){
+            if (user.getEmail().equals(userDTO.getPassword())){
+                throw new RuntimeException("Email và mật khẩu không được trùng nhau");
+            }
             user.setPassword(userDTO.getPassword());
         }
         user.setFullName(userDTO.getFullName());
