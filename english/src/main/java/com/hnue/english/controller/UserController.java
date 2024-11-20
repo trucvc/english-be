@@ -329,40 +329,44 @@ public class UserController {
                 return ResponseEntity.status(400).body(ApiResponse.success(400, "Không tồn tại vocab với id", v));
             }
             List<Vocabulary> vocabularies = new ArrayList<>();
+            List<Vocabulary> learn = new ArrayList<>();
             for (int id : list.getId()){
                 vocabularies.add(vocabularyService.getVocab(id));
+                learn.add(vocabularyService.getVocab(id));
             }
-            List<String> existingUserVocab = new ArrayList<>();
+//            List<String> existingUserVocab = new ArrayList<>();
             for (Vocabulary vo : vocabularies){
                 if (userProgressService.isVocabExistForUser(user, vo)){
-                    existingUserVocab.add(String.valueOf(vo.getId()));
+                    learn.remove(vo);
                 }
             }
-            if (!existingUserVocab.isEmpty()){
-                v.setCountError(existingUserVocab.size());
-                v.setCountSuccess(list.getId().size() - existingUserVocab.size());
-                v.setError(existingUserVocab);
-                return ResponseEntity.status(400).body(ApiResponse.success(400, "Đã tồn tại vocab với id", v));
-            }
-            List<UserProgress> us = userProgressService.saveAllVocabForUser(user, vocabularies);
+//            if (!existingUserVocab.isEmpty()){
+//                v.setCountError(existingUserVocab.size());
+//                v.setCountSuccess(list.getId().size() - existingUserVocab.size());
+//                v.setError(existingUserVocab);
+//                return ResponseEntity.status(400).body(ApiResponse.success(400, "Đã tồn tại vocab với id", v));
+//            }
+            if (!learn.isEmpty()){
+                List<UserProgress> us = userProgressService.saveAllVocabForUser(user, learn);
 
-            List<Topic> topics = topicService.getAllTopicWithVocab();
-            for (Topic topic : topics){
-                List<Vocabulary> vocab = topic.getVocabularies();
-                if (userProgressService.allVocabulariesAssignedToUser(user, vocab)){
-                    topicProgressService.createTopicProgressIfNotExist(user, topic, 1, new Date());
+                List<Topic> topics = topicService.getAllTopicWithVocab();
+                for (Topic topic : topics){
+                    List<Vocabulary> vocab = topic.getVocabularies();
+                    if (userProgressService.allVocabulariesAssignedToUser(user, vocab)){
+                        topicProgressService.createTopicProgressIfNotExist(user, topic, 1, new Date());
+                    }
+                }
+
+                List<Course> courses = courseService.getAllCourseWithTopic();
+                for (Course course : courses){
+                    List<Topic> topic = course.getTopics();
+                    if (topicProgressService.allTopicAssignedToUser(user, topic)){
+                        courseProgressService.createCourseProgressIfNotExist(user, course, 1, new Date());
+                    }
                 }
             }
 
-            List<Course> courses = courseService.getAllCourseWithTopic();
-            for (Course course : courses){
-                List<Topic> topic = course.getTopics();
-                if (topicProgressService.allTopicAssignedToUser(user, topic)){
-                    courseProgressService.createCourseProgressIfNotExist(user, course, 1, new Date());
-                }
-            }
-
-            return ResponseEntity.status(200).body(ApiResponse.success(200, "Selected vocabulary saved for review", us));
+            return ResponseEntity.status(200).body(ApiResponse.success(200, "Selected vocabulary saved for review", null));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
         }
