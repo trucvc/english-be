@@ -4,7 +4,11 @@ import com.hnue.english.model.User;
 import com.hnue.english.model.UserProgress;
 import com.hnue.english.model.Vocabulary;
 import com.hnue.english.repository.UserProgressRepository;
+import jakarta.persistence.criteria.JoinType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -102,11 +106,50 @@ public class UserProgressService {
         return calendar.getTime();
     }
 
-    public Map<Integer, List<UserProgress>> getUserProgressByLevel(User user){
-        List<UserProgress> list = userProgressRepository.findUserProgressByLevel(user);
-        Map<Integer, List<UserProgress>> groupedByLevel = list.stream()
-                .collect(Collectors.groupingBy(UserProgress::getLevel));
-        return groupedByLevel;
+//    public Map<Integer, List<UserProgress>> getUserProgressByLevel(User user){
+//        List<UserProgress> list = userProgressRepository.findUserProgressByLevel(user);
+//        Map<Integer, List<UserProgress>> groupedByLevel = list.stream()
+//                .collect(Collectors.groupingBy(UserProgress::getLevel));
+//        return groupedByLevel;
+//    }
+
+    public List<UserProgress> getUserProgressByLevel(String search, String sort, User user){
+        Specification<UserProgress> spec = (root, query, criteriaBuilder) -> {
+            var predicates= criteriaBuilder.conjunction();
+            var vocabularyJoin = root.join("vocabulary", JoinType.INNER);
+            var userJoin = root.join("user", JoinType.INNER);
+
+            if (search != null && !search.trim().isEmpty()) {
+                predicates = criteriaBuilder.and(
+                        predicates,
+                        criteriaBuilder.or(
+                                criteriaBuilder.like(vocabularyJoin.get("word"), "%" + search + "%"),
+                                criteriaBuilder.like(vocabularyJoin.get("meaning"), "%" + search + "%")
+                        )
+                );
+            }
+
+            predicates = criteriaBuilder.and(
+                    predicates,
+                    criteriaBuilder.equal(userJoin.get("id"), user.getUserId())
+            );
+
+            if (sort != null && !sort.trim().isEmpty()) {
+                switch (sort) {
+                    case "level":
+                        query.orderBy(criteriaBuilder.asc(root.get("level")));
+                        break;
+                    case "-level":
+                        query.orderBy(criteriaBuilder.desc(root.get("level")));
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return predicates;
+        };
+        return userProgressRepository.findAll(spec);
     }
 
     public boolean isVocabExistForUser(User user, Vocabulary vocab) {
