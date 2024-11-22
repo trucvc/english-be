@@ -113,7 +113,7 @@ public class UserProgressService {
 //        return groupedByLevel;
 //    }
 
-    public List<UserProgress> getUserProgressByLevel(String search, String sort, User user){
+    public List<UserProgress> getUserProgressByLevel(String search, int level, User user){
         Specification<UserProgress> spec = (root, query, criteriaBuilder) -> {
             var predicates= criteriaBuilder.conjunction();
             var vocabularyJoin = root.join("vocabulary", JoinType.INNER);
@@ -129,23 +129,16 @@ public class UserProgressService {
                 );
             }
 
+            if (level != 0) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.get("level"), level));
+            }
+
             predicates = criteriaBuilder.and(
                     predicates,
                     criteriaBuilder.equal(userJoin.get("id"), user.getUserId())
             );
 
-            if (sort != null && !sort.trim().isEmpty()) {
-                switch (sort) {
-                    case "level":
-                        query.orderBy(criteriaBuilder.asc(root.get("level")));
-                        break;
-                    case "-level":
-                        query.orderBy(criteriaBuilder.desc(root.get("level")));
-                        break;
-                    default:
-                        break;
-                }
-            }
+            query.orderBy(criteriaBuilder.asc(vocabularyJoin.get("word")));
 
             return predicates;
         };

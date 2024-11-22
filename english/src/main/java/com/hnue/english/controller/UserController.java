@@ -453,16 +453,16 @@ public class UserController {
 
     @GetMapping("/wordbook")
     public ResponseEntity<ApiResponse<?>> wordbook(HttpServletRequest request,
-                                                   @RequestParam(required = false) String search, @RequestParam(required = false) String sort){
+                                                   @RequestParam(required = false) String search, @RequestParam(required = false, defaultValue = "0") int level){
         try {
             String authHeader = request.getHeader("Authorization");
             String token = authHeader.substring(7);
             User user = userService.fetch(token);
-            List<UserProgress> level = userProgressService.getUserProgressByLevel(search, sort, user);
+            List<UserProgress> us = userProgressService.getUserProgressByLevel(search, level, user);
 //            if (level.isEmpty()){
 //                return ResponseEntity.status(400).body(ApiResponse.error(400, "Bạn chưa có từ vựng nào", "Bad Request"));
 //            }else{
-                return ResponseEntity.status(200).body(ApiResponse.success(200, "", level));
+                return ResponseEntity.status(200).body(ApiResponse.success(200, "", us));
             //}
         } catch (Exception e) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
