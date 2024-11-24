@@ -28,4 +28,11 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
 
     @Query("SELECT u FROM User u WHERE u.subscriptionPlan != 'none' AND u.subscriptionEndDate > CURRENT_TIMESTAMP ORDER BY u.subscriptionEndDate")
     List<User> findUsersWithExpiringSubscriptions();
+
+    @Query("SELECT FUNCTION('MONTH', u.subscriptionStartDate) AS month, COUNT(u) AS totalUsers " +
+            "FROM User u " +
+            "WHERE FUNCTION('YEAR', u.subscriptionStartDate) = FUNCTION('YEAR', CURRENT_DATE) " +
+            "GROUP BY FUNCTION('MONTH', u.subscriptionStartDate) " +
+            "ORDER BY month")
+    List<Object[]> countUsersByMonthCurrentYear();
 }

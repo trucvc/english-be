@@ -202,6 +202,27 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User payment(User user){
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        if (user.getSubscriptionPlan().equals("6_months")){
+            calendar.add(Calendar.MONTH, 6);
+            user.setSubscriptionStartDate(new Date());
+            user.setSubscriptionEndDate(calendar.getTime());
+        } else if (user.getSubscriptionPlan().equals("1_year")) {
+            calendar.add(Calendar.YEAR, 1);
+            user.setSubscriptionStartDate(new Date());
+            user.setSubscriptionEndDate(calendar.getTime());
+        }else {
+            calendar.add(Calendar.YEAR, 3);
+            user.setSubscriptionStartDate(new Date());
+            user.setSubscriptionEndDate(calendar.getTime());
+        }
+        user.setPaid(1);
+        user.setUpdatedAt(new Date());
+        return userRepository.save(user);
+    }
+
     public void deleteSubscription(int id){
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + id));
         user.setSubscriptionPlan("none");
@@ -319,6 +340,15 @@ public class UserService {
         return results.stream()
                 .collect(Collectors.toMap(
                         result -> (String) result[0],
+                        result -> (Long) result[1]
+                ));
+    }
+
+    public Map<Integer, Long> countUsersByMonthCurrentYear() {
+        List<Object[]> results = userRepository.countUsersByMonthCurrentYear();
+        return results.stream()
+                .collect(Collectors.toMap(
+                        result -> (Integer) result[0],
                         result -> (Long) result[1]
                 ));
     }

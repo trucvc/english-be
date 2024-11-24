@@ -12,8 +12,11 @@ import java.util.Map;
 public class VNPAYService {
     private final VNPAYConfig vnpayConfig;
 
-    public String createPaymentUrl(HttpServletRequest request){
+    public String createPaymentUrl(HttpServletRequest request, int paid){
         long amount = (long)Double.parseDouble(request.getParameter("amount"))*100;
+        if (paid == 0){
+            amount = amount * 80 / 100;
+        }
         String bankCode = request.getParameter("bankCode");
         Map<String, String> vnpParams = vnpayConfig.getVNPayConfig();
         vnpParams.put("vnp_Amount", String.valueOf(amount));

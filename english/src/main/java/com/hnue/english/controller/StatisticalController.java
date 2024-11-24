@@ -93,4 +93,22 @@ public class StatisticalController {
         List<User> users = userService.getUsersWithExpiringSubscriptions();
         return ResponseEntity.status(200).body(ApiResponse.success(200, "", users));
     }
+
+    @GetMapping("/course")
+    public ResponseEntity<ApiResponse<?>> course(){
+        List<Course> courses = courseService.getAllWithTopicsAndVocabsOrderedByCourseName("","","","");
+        return ResponseEntity.status(200).body(ApiResponse.success(200, "", courses.size()));
+    }
+
+    @GetMapping("/topic")
+    public ResponseEntity<ApiResponse<?>> topic(){
+        List<Topic> topics = topicService.getAllWithVocabs("", "", 0, "");
+        return ResponseEntity.status(200).body(ApiResponse.success(200, "", topics.size()));
+    }
+
+    @GetMapping("/sub")
+    public ResponseEntity<ApiResponse<?>> sub(){
+        Map<Integer, Long> sub = userService.countUsersByMonthCurrentYear();
+        return ResponseEntity.status(200).body(ApiResponse.success(200, "", sub));
+    }
 }
