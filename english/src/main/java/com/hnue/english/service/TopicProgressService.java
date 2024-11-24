@@ -35,7 +35,7 @@ public class TopicProgressService {
         return true;
     }
 
-    public List<TopicProgress> getAllTopicProgress(){
-        return topicProgressRepository.findAll();
+    public List<TopicProgress> getAllTopicProgress(User user){
+        return topicProgressRepository.getAllTopicProgressForUser(user);
     }
 }

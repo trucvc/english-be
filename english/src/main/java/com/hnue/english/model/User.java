@@ -70,7 +70,7 @@ public class User implements UserDetails{
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Subscription subscription;
 
-    @JsonManagedReference
+    @JsonBackReference
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<FormSubmission> formSubmissions;
 

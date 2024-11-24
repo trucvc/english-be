@@ -438,14 +438,19 @@ public class UserController {
     }
 
     @PostMapping("/complete_review")
-    public ResponseEntity<ApiResponse<?>> completeReview(HttpServletRequest request, @RequestBody VocabReview review){
+    public ResponseEntity<ApiResponse<?>> completeReview(HttpServletRequest request, @RequestBody List<VocabReview> reviews){
         try {
             String authHeader = request.getHeader("Authorization");
             String token = authHeader.substring(7);
             User user = userService.fetch(token);
-            Vocabulary vocabulary = vocabularyService.getVocab(review.getId());
-            UserProgress us = userProgressService.getUserProgress(user, vocabulary);
-            return ResponseEntity.status(200).body(ApiResponse.success(200, "", userProgressService.updateUserProgress(us, review.getStatus())));
+            List<UserProgress> progresses = new ArrayList<>();
+            for (VocabReview review : reviews){
+                Vocabulary vocabulary = vocabularyService.getVocab(review.getId());
+                UserProgress us = userProgressService.getUserProgress(user, vocabulary);
+                UserProgress u = userProgressService.updateUserProgress(us, review.getStatus());
+                progresses.add(u);
+            }
+            return ResponseEntity.status(200).body(ApiResponse.success(200, "", progresses));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
         }
@@ -472,7 +477,10 @@ public class UserController {
     @GetMapping("/course_progress")
     public ResponseEntity<ApiResponse<?>> courseProgress(HttpServletRequest request){
         try {
-            List<CourseProgress> courseProgresses = courseProgressService.getAllCourseProgress();
+            String authHeader = request.getHeader("Authorization");
+            String token = authHeader.substring(7);
+            User user = userService.fetch(token);
+            List<CourseProgress> courseProgresses = courseProgressService.getAllCourseProgress(user);
             if (courseProgresses.isEmpty()){
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Chưa có khóa học nào hoàn thành", "Bad Request"));
             }else{
@@ -486,7 +494,10 @@ public class UserController {
     @GetMapping("/topic_progress")
     public ResponseEntity<ApiResponse<?>> topicProgress(HttpServletRequest request){
         try {
-            List<TopicProgress> topicProgresses = topicProgressService.getAllTopicProgress();
+            String authHeader = request.getHeader("Authorization");
+            String token = authHeader.substring(7);
+            User user = userService.fetch(token);
+            List<TopicProgress> topicProgresses = topicProgressService.getAllTopicProgress(user);
             if (topicProgresses.isEmpty()){
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Chưa có chủ đề nào hoàn thành", "Bad Request"));
             }else{

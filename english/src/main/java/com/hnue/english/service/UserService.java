@@ -150,6 +150,8 @@ public class UserService {
                 throw new RuntimeException("Email và mật khẩu không được trùng nhau");
             }
             user.setPassword(userDTO.getPassword());
+            String pass = passwordEncoder.encode(user.getPassword());
+            user.setPassword(pass);
         }
         user.setFullName(userDTO.getFullName());
         user.setSubscriptionPlan(userDTO.getSubscriptionPlan());

@@ -25,7 +25,7 @@ public class CourseProgressService {
         }
     }
 
-    public List<CourseProgress> getAllCourseProgress(){
-        return courseProgressRepository.findAll();
+    public List<CourseProgress> getAllCourseProgress(User user){
+        return courseProgressRepository.getAllCourseProgressForUser(user);
     }
 }
