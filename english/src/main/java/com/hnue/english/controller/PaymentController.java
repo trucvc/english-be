@@ -35,7 +35,7 @@ public class PaymentController {
             User user = userService.fetch(token);
             double amount = Double.parseDouble(request.getParameter("vnp_Amount"))/100;
             double amountNoDis = amount / 80 * 100;
-            if (amount == 299000 || amountNoDis == 299000){
+            if (amount == 399000 || amountNoDis == 399000){
                 user.setSubscriptionPlan("6_months");
             } else if (amount == 699000 || amountNoDis == 699000) {
                 user.setSubscriptionPlan("1_year");
