@@ -109,7 +109,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> updateUser(@PathVariable int id, @RequestParam(required = false) String password,
+    public ResponseEntity<ApiResponse<?>> updateUser(@PathVariable int id,
                                                      @RequestParam String fullName, @RequestParam String subscriptionPlan,
                                                      @RequestParam String role){
         try {
@@ -120,14 +120,7 @@ public class UserController {
             if (!fullName.matches(usernameRegex)) {
                 return ResponseEntity.status(400).body(ApiResponse.error(400, "Tên không hợp lệ", "Bad Request"));
             }
-            if (!password.isEmpty()){
-                String passwordRegex = "^(?!.*\\s)(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}$";
-                if (!password.matches(passwordRegex)) {
-                    return ResponseEntity.status(400).body(ApiResponse.error(400, "Mật khẩu phải có ít nhất một chữ hoa, một chữ thường, một chữ số, một ký tự đặc biệt và tối thiểu 8 ký tự và không chứa khoảng trắng", "Bad Request"));
-                }
-            }
             UserDTO userDTO = UserDTO.builder()
-                    .password(password)
                     .fullName(fullName).subscriptionPlan(subscriptionPlan)
                     .role(role)
                     .build();

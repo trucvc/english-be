@@ -33,14 +33,14 @@ public class PaymentController {
             String authHeader = request.getHeader("Authorization");
             String token = authHeader.substring(7);
             User user = userService.fetch(token);
-            long amount = (long)Double.parseDouble(request.getParameter("vnp_Amount"))/100;
-            long amountNoDis = amount / 80 * 100;
+            double amount = Double.parseDouble(request.getParameter("vnp_Amount"))/100;
+            double amountNoDis = amount / 80 * 100;
             if (amount == 299000 || amountNoDis == 299000){
                 user.setSubscriptionPlan("6_months");
             } else if (amount == 699000 || amountNoDis == 699000) {
                 user.setSubscriptionPlan("1_year");
             }else {
-                user.setSubscriptionPlan("3_year");
+                user.setSubscriptionPlan("3_years");
             }
             User u = userService.payment(user);
             return ResponseEntity.status(200).body(ApiResponse.success(200, "Thanh toán thành công",u));
