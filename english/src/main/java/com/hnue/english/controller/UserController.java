@@ -367,12 +367,12 @@ public class UserController {
             if (!learn.isEmpty()){
                 List<UserProgress> us = userProgressService.saveAllVocabForUser(user, learn);
 
-                List<Topic> topics = topicService.getAllTopicWithVocab();
-                for (Topic topic : topics){
-                    List<Vocabulary> vocab = topic.getVocabularies();
-                    if (userProgressService.allVocabulariesAssignedToUser(user, vocab)){
-                        topicProgressService.createTopicProgressIfNotExist(user, topic, 1, new Date());
-                    }
+//                List<Topic> topics = topicService.getAllTopicWithVocab();
+                for (UserProgress u : us){
+//                    List<Vocabulary> vocab = topic.getVocabularies();
+//                    if (userProgressService.allVocabulariesAssignedToUser(user, vocab)){
+                        topicProgressService.createTopicProgressIfNotExist(user, u.getVocabulary().getTopic(), 1, new Date());
+                    //}
                 }
 
                 List<Course> courses = courseService.getAllCourseWithTopic();
