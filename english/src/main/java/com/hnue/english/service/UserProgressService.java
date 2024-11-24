@@ -157,6 +157,11 @@ public class UserProgressService {
         return true;
     }
 
+    public void deleteUS(User user, int id){
+        UserProgress userProgress = userProgressRepository.getUserProgressById(user, id).orElseThrow(() -> new RuntimeException("Khong tim thay voi id hoac ban khong co quyen xoa "+id));
+        userProgressRepository.delete(userProgress);
+    }
+
     public void deleteUserProgress(UserProgress userProgress){
         userProgressRepository.delete(userProgress);
     }

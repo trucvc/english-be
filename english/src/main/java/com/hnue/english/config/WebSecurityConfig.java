@@ -1,11 +1,9 @@
 package com.hnue.english.config;
 
 import com.hnue.english.filter.JwtTokenFilter;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -32,6 +30,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(requests -> {
                     requests.requestMatchers(
                                     "/api/users/login", "/api/users/register",
+                                    "/api/users/reset", "/api/users/new_password",
                                     "/api/course/user", "/api/topics/user")
                             .permitAll()
                             .anyRequest().authenticated();

@@ -1,5 +1,6 @@
 package com.hnue.english.controller;
 
+import com.hnue.english.dto.Otp;
 import com.hnue.english.dto.UserDTO;
 import com.hnue.english.dto.VocabReview;
 import com.hnue.english.dto.VocabSelected;
@@ -15,9 +16,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,6 +35,8 @@ public class UserController {
     private final UserProgressService userProgressService;
     private final CourseProgressService courseProgressService;
     private final TopicProgressService topicProgressService;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @InitBinder
     public void initBinder(WebDataBinder dataBinder) {
@@ -474,6 +479,19 @@ public class UserController {
         }
     }
 
+    @DeleteMapping("/wordbook/{id}")
+    public ResponseEntity<ApiResponse<?>> deleteWordbook(@PathVariable int id, HttpServletRequest request){
+        try {
+            String authHeader = request.getHeader("Authorization");
+            String token = authHeader.substring(7);
+            User user = userService.fetch(token);
+            userProgressService.deleteUS(user, id);
+            return ResponseEntity.status(200).body(ApiResponse.success(200, "Xoa thanh cong vocab trong workbook voi id "+id, null));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+        }
+    }
+
     @GetMapping("/course_progress")
     public ResponseEntity<ApiResponse<?>> courseProgress(HttpServletRequest request){
         try {
@@ -503,6 +521,70 @@ public class UserController {
             }else{
                 return ResponseEntity.status(200).body(ApiResponse.success(200, "", topicProgresses));
             }
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+        }
+    }
+
+    @PostMapping("/change_password")
+    public ResponseEntity<ApiResponse<?>> changePassword(HttpServletRequest request, @RequestParam String oldPassword,
+                                                         @RequestParam String newPassword){
+        try {
+            String authHeader = request.getHeader("Authorization");
+            String token = authHeader.substring(7);
+            User user = userService.fetch(token);
+            if (oldPassword.isEmpty() || newPassword.isEmpty()){
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
+            }
+            String passwordRegex = "^(?!.*\\s)(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}$";
+            if (!newPassword.matches(passwordRegex)) {
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Mật khẩu phải có ít nhất một chữ hoa, một chữ thường, một chữ số, một ký tự đặc biệt và tối thiểu 8 ký tự và không chứa khoảng trắng", "Bad Request"));
+            }
+            if (!passwordEncoder.matches(oldPassword, user.getPassword())){
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Mật khẩu cũ không chính xác", "Bad Request"));
+            }
+            if (oldPassword.equals(newPassword)){
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Mật khẩu mới phải khác mật khẩu cũ", "Bad Request"));
+            }
+            user.setPassword(newPassword);
+            User u = userService.changePassword(user);
+            return ResponseEntity.status(200).body(ApiResponse.success(200, "", u));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+        }
+    }
+
+    @PostMapping("/reset")
+    public ResponseEntity<ApiResponse<?>> resetPassword(@RequestParam String email){
+        try {
+            if (email.isEmpty()){
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
+            }
+            if (!userService.existsByEmail(email)){
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Không tồn tại email này", "Bad Request"));
+            }
+            String otp = emailService.sendOtpEmail(email);
+            Otp o = new Otp(email, otp, LocalDateTime.now().plusMinutes(5));
+            return ResponseEntity.status(200).body(ApiResponse.success(200, "", o));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
+        }
+    }
+
+    @PostMapping("/new_password")
+    public ResponseEntity<ApiResponse<?>> newPassword(@RequestParam String email, @RequestParam String password){
+        try {
+            if (password.isEmpty()){
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Không để trống dữ liệu", "Bad Request"));
+            }
+            String passwordRegex = "^(?!.*\\s)(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}$";
+            if (!password.matches(passwordRegex)) {
+                return ResponseEntity.status(400).body(ApiResponse.error(400, "Mật khẩu phải có ít nhất một chữ hoa, một chữ thường, một chữ số, một ký tự đặc biệt và tối thiểu 8 ký tự và không chứa khoảng trắng", "Bad Request"));
+            }
+            User user = userService.getUserByEmail(email);
+            user.setPassword(password);
+            User u = userService.changePassword(user);
+            return ResponseEntity.status(200).body(ApiResponse.success(200, "", u));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(ApiResponse.error(400, e.getMessage(), "Bad Request"));
         }

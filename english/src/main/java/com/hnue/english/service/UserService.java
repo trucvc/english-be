@@ -357,6 +357,12 @@ public class UserService {
         return userRepository.findUsersWithExpiringSubscriptions();
     }
 
+    public User changePassword(User user){
+        String pass = passwordEncoder.encode(user.getPassword());
+        user.setPassword(pass);
+        return userRepository.save(user);
+    }
+
     @Scheduled(fixedDelay = 5000)
     public void getAllUser(){
         List<User> users = userRepository.getAllUser();

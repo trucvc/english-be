@@ -31,4 +31,7 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, Inte
 
     @Query("SELECT us.vocabulary.word, COUNT(us) FROM UserProgress us GROUP BY us.vocabulary.word ORDER BY COUNT(us) DESC")
     List<Object[]> findTop10PopularVocabs();
+
+    @Query("SELECT us FROM UserProgress us WHERE us.user = :user AND us.id = :id")
+    Optional<UserProgress> getUserProgressById(@Param("user") User user, @Param("id") int id);
 }
