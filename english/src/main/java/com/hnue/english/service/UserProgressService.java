@@ -161,6 +161,16 @@ public class UserProgressService {
         userProgressRepository.delete(userProgress);
     }
 
+    public Map<String, Long> getTop10PopularVocabs() {
+        List<Object[]> results = userProgressRepository.findTop10PopularVocabs();
+        List<Object[]> topResults = results.size() > 10 ? results.subList(0, 10) : results;
+        return topResults.stream()
+                .collect(Collectors.toMap(
+                        result -> (String) result[0],
+                        result -> (Long) result[1]
+                ));
+    }
+
     @Scheduled(fixedDelay = 5000)
     public void getAllUserProgress(){
         List<UserProgress> list = userProgressRepository.findAll();

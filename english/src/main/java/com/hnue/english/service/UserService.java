@@ -18,10 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -311,6 +308,23 @@ public class UserService {
         user.setCreatedAt(new Date());
         user.setUpdatedAt(new Date());
         return user;
+    }
+
+    public List<User> getUsersCreatedBetween(Date start, Date end){
+        return userRepository.findUsersCreatedBetween(start, end);
+    }
+
+    public Map<String, Long> getUserSegments() {
+        List<Object[]> results = userRepository.findUserSegmentsBySubscription();
+        return results.stream()
+                .collect(Collectors.toMap(
+                        result -> (String) result[0],
+                        result -> (Long) result[1]
+                ));
+    }
+
+    public List<User> getUsersWithExpiringSubscriptions(){
+        return userRepository.findUsersWithExpiringSubscriptions();
     }
 
     @Scheduled(fixedDelay = 5000)

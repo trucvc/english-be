@@ -14,4 +14,7 @@ public interface CourseProgressRepository extends JpaRepository<CourseProgress, 
 
     @Query("SELECT cp FROM CourseProgress cp WHERE cp.user = :user")
     List<CourseProgress> getAllCourseProgressForUser(@Param("user") User user);
+
+    @Query("SELECT cp.course.courseName, COUNT(cp) FROM CourseProgress cp WHERE cp.isCompleted = 1 GROUP BY cp.course.courseName ORDER BY COUNT(cp) DESC")
+    List<Object[]> findTop10PopularCourses();
 }

@@ -16,4 +16,7 @@ public interface TopicProgressRepository extends JpaRepository<TopicProgress, In
 
     @Query("SELECT tp FROM TopicProgress tp WHERE tp.user = :user")
     List<TopicProgress> getAllTopicProgressForUser(@Param("user") User user);
+
+    @Query("SELECT tp.topic.topicName, COUNT(tp) FROM TopicProgress tp WHERE tp.isCompleted = 1 GROUP BY tp.topic.topicName ORDER BY COUNT(tp) DESC")
+    List<Object[]> findTop10PopularTopics();
 }

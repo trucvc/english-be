@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,5 +39,15 @@ public class TopicProgressService {
 
     public List<TopicProgress> getAllTopicProgress(User user){
         return topicProgressRepository.getAllTopicProgressForUser(user);
+    }
+
+    public Map<String, Long> getTop10PopularTopics() {
+        List<Object[]> results = topicProgressRepository.findTop10PopularTopics();
+        List<Object[]> topResults = results.size() > 10 ? results.subList(0, 10) : results;
+        return topResults.stream()
+                .collect(Collectors.toMap(
+                        result -> (String) result[0],
+                        result -> (Long) result[1]
+                ));
     }
 }
