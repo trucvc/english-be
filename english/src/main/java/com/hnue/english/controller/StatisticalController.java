@@ -118,10 +118,11 @@ public class StatisticalController {
     @GetMapping("/revenue")
     public ResponseEntity<ApiResponse<?>> revenue(){
         Map<String, Long> map = userService.getUserSegments();
-        return ResponseEntity.status(200).body(ApiResponse.success(200, "", calculateRevenueByPlan(map)));
+        BigDecimal sum = calculateRevenueByPlan(map);
+        return ResponseEntity.status(200).body(ApiResponse.success(200, "", sum));
     }
 
-    private Map<String, BigDecimal> calculateRevenueByPlan(Map<String, Long> userSegments) {
+    private BigDecimal calculateRevenueByPlan(Map<String, Long> userSegments) {
         Map<String, BigDecimal> subscriptionPrices = Map.of(
                 "6_months", new BigDecimal("399000.0"),
                 "1_year", new BigDecimal("699000.0"),
@@ -130,12 +131,9 @@ public class StatisticalController {
 
         return userSegments.entrySet().stream()
                 .filter(entry -> subscriptionPrices.containsKey(entry.getKey()))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> subscriptionPrices.get(entry.getKey()).multiply(new BigDecimal(entry.getValue())),
-                        (existing, replacement) -> existing,
-                        LinkedHashMap::new
-                ));
+                .map(entry -> subscriptionPrices.get(entry.getKey())
+                        .multiply(new BigDecimal(entry.getValue())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @GetMapping("/vip")
