@@ -143,29 +143,9 @@ public class UserService {
     public User updateUser(int id, UserDTO userDTO){
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + id));
         user.setFullName(userDTO.getFullName());
-        user.setSubscriptionPlan(userDTO.getSubscriptionPlan());
-        if (user.getSubscriptionEndDate() == null){
-            if (!userDTO.getSubscriptionPlan().equals("none")){
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTime(new Date());
-                if (userDTO.getSubscriptionPlan().equals("6_months")){
-                    calendar.add(Calendar.MONTH, 6);
-                    user.setSubscriptionStartDate(new Date());
-                    user.setSubscriptionEndDate(calendar.getTime());
-                } else if (userDTO.getSubscriptionPlan().equals("1_year")) {
-                    calendar.add(Calendar.YEAR, 1);
-                    user.setSubscriptionStartDate(new Date());
-                    user.setSubscriptionEndDate(calendar.getTime());
-                }else {
-                    calendar.add(Calendar.YEAR, 3);
-                    user.setSubscriptionStartDate(new Date());
-                    user.setSubscriptionEndDate(calendar.getTime());
-                }
-            }
-        }else{
-            if (user.getSubscriptionEndDate().after(new Date())){
-                throw new RuntimeException("User vẫn còn thời hạn của gói đăng kí");
-            }else{
+        if (!user.getSubscriptionPlan().equals(userDTO.getSubscriptionPlan())){
+            user.setSubscriptionPlan(userDTO.getSubscriptionPlan());
+            if (user.getSubscriptionEndDate() == null){
                 if (!userDTO.getSubscriptionPlan().equals("none")){
                     Calendar calendar = Calendar.getInstance();
                     calendar.setTime(new Date());
@@ -183,9 +163,30 @@ public class UserService {
                         user.setSubscriptionEndDate(calendar.getTime());
                     }
                 }
+            }else{
+                if (user.getSubscriptionEndDate().after(new Date())){
+                    throw new RuntimeException("User vẫn còn thời hạn của gói đăng kí");
+                }else{
+                    if (!userDTO.getSubscriptionPlan().equals("none")){
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.setTime(new Date());
+                        if (userDTO.getSubscriptionPlan().equals("6_months")){
+                            calendar.add(Calendar.MONTH, 6);
+                            user.setSubscriptionStartDate(new Date());
+                            user.setSubscriptionEndDate(calendar.getTime());
+                        } else if (userDTO.getSubscriptionPlan().equals("1_year")) {
+                            calendar.add(Calendar.YEAR, 1);
+                            user.setSubscriptionStartDate(new Date());
+                            user.setSubscriptionEndDate(calendar.getTime());
+                        }else {
+                            calendar.add(Calendar.YEAR, 3);
+                            user.setSubscriptionStartDate(new Date());
+                            user.setSubscriptionEndDate(calendar.getTime());
+                        }
+                    }
+                }
             }
         }
-
 //        if (user.getRole().equals("ROLE_ADMIN") && userDTO.getRole().equals("ROLE_USER")){
 //            throw new RuntimeException("Bạn không thể cập nhật quyền xuống người dùng");
 //        }
