@@ -14,9 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/statistical")
@@ -110,5 +113,40 @@ public class StatisticalController {
     public ResponseEntity<ApiResponse<?>> sub(){
         Map<Integer, Long> sub = userService.countUsersByMonthCurrentYear();
         return ResponseEntity.status(200).body(ApiResponse.success(200, "", sub));
+    }
+
+    @GetMapping("/revenue")
+    public ResponseEntity<ApiResponse<?>> revenue(){
+        Map<String, Long> map = userService.getUserSegments();
+        return ResponseEntity.status(200).body(ApiResponse.success(200, "", calculateRevenueByPlan(map)));
+    }
+
+    private Map<String, BigDecimal> calculateRevenueByPlan(Map<String, Long> userSegments) {
+        Map<String, BigDecimal> subscriptionPrices = Map.of(
+                "6_months", new BigDecimal("399000.0"),
+                "1_year", new BigDecimal("699000.0"),
+                "3_years", new BigDecimal("1199000.0")
+        );
+
+        return userSegments.entrySet().stream()
+                .filter(entry -> subscriptionPrices.containsKey(entry.getKey()))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> subscriptionPrices.get(entry.getKey()).multiply(new BigDecimal(entry.getValue())),
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new
+                ));
+    }
+
+    @GetMapping("/vip")
+    public ResponseEntity<ApiResponse<?>> vip(){
+        List<User> users = userService.getAllUsers();
+        return ResponseEntity.status(200).body(ApiResponse.success(200, "", usersVip(users).size()));
+    }
+
+    private List<User> usersVip(List<User> users){
+        return users.stream()
+                .filter(user -> !user.getSubscriptionPlan().equals("none"))
+                .collect(Collectors.toList());
     }
 }

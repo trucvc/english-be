@@ -329,11 +329,13 @@ public class UserService {
     }
 
     public Map<String, Long> getUserSegments() {
-        List<Object[]> results = userRepository.findUserSegmentsBySubscription();
+        List<Object[]> results = userRepository.findSubscriptionPlanCounts();
         return results.stream()
                 .collect(Collectors.toMap(
                         result -> (String) result[0],
-                        result -> (Long) result[1]
+                        result -> (Long) result[1],
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new
                 ));
     }
 

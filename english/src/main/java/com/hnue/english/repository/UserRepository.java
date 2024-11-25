@@ -23,8 +23,15 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
     @Query("SELECT u FROM User u WHERE u.createdAt BETWEEN :start AND :end")
     List<User> findUsersCreatedBetween(@Param("start") Date start, @Param("end") Date end);
 
-    @Query("SELECT u.subscriptionPlan, COUNT(u) FROM User u GROUP BY u.subscriptionPlan")
-    List<Object[]> findUserSegmentsBySubscription();
+    @Query("SELECT u.subscriptionPlan, COUNT(u) FROM User u GROUP BY u.subscriptionPlan ORDER BY " +
+            "CASE " +
+            "  WHEN u.subscriptionPlan = '6_months' THEN 1 " +
+            "  WHEN u.subscriptionPlan = '1_year' THEN 2 " +
+            "  WHEN u.subscriptionPlan = '3_years' THEN 3 " +
+            "  WHEN u.subscriptionPlan = 'none' THEN 4 " +
+            "  ELSE 5 " +
+            "END")
+    List<Object[]> findSubscriptionPlanCounts();
 
     @Query("SELECT u FROM User u WHERE u.subscriptionPlan != 'none' AND u.subscriptionEndDate > CURRENT_TIMESTAMP ORDER BY u.subscriptionEndDate")
     List<User> findUsersWithExpiringSubscriptions();
