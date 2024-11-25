@@ -82,17 +82,17 @@ public class FormSubmissionService {
 
     public FormSubmission updateFormSubmission(int id){
         FormSubmission formSubmission = formSubmissionRepository.findById(id).orElseThrow(() -> new RuntimeException("Không có phiếu nào với id: " + id));
-        if (formSubmission.getStatus() < 3){
+        if (formSubmission.getStatus() < 2){
             int status = formSubmission.getStatus();
             formSubmission.setStatus(status+1);
+            formSubmission.setUpdatedAt(new Date());
         }
-        formSubmission.setUpdatedAt(new Date());
         return formSubmissionRepository.save(formSubmission);
     }
 
     public FormSubmission rejectedFormSubmission(int id){
         FormSubmission formSubmission = formSubmissionRepository.findById(id).orElseThrow(() -> new RuntimeException("Không có phiếu nào với id: " + id));
-        formSubmission.setStatus(4);
+        formSubmission.setStatus(3);
         formSubmission.setUpdatedAt(new Date());
         return formSubmissionRepository.save(formSubmission);
     }
