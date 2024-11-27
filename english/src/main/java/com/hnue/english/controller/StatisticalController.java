@@ -32,6 +32,7 @@ public class StatisticalController {
     private final TopicService topicService;
     private final TopicProgressService topicProgressService;
     private final VocabularyService vocabularyService;
+    private final PaymentService paymentService;
 
     @GetMapping("/active_count")
     public ResponseEntity<ApiResponse<?>> countUser(){
@@ -117,8 +118,7 @@ public class StatisticalController {
 
     @GetMapping("/revenue")
     public ResponseEntity<ApiResponse<?>> revenue(){
-        Map<String, Long> map = userService.getUserSegments();
-        BigDecimal sum = calculateRevenueByPlan(map);
+        BigDecimal sum = paymentService.revenue();
         return ResponseEntity.status(200).body(ApiResponse.success(200, "", sum));
     }
 

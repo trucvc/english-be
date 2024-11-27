@@ -2,6 +2,7 @@ package com.hnue.english.controller;
 
 import com.hnue.english.model.User;
 import com.hnue.english.response.ApiResponse;
+import com.hnue.english.service.PaymentService;
 import com.hnue.english.service.UserService;
 import com.hnue.english.service.VNPAYService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PaymentController {
     private final UserService userService;
     private final VNPAYService vnpayService;
+    private final PaymentService paymentService;
 
     @GetMapping("/pay")
     public ResponseEntity<ApiResponse<?>> pay(HttpServletRequest request){
@@ -43,6 +45,7 @@ public class PaymentController {
                 user.setSubscriptionPlan("3_years");
             }
             User u = userService.payment(user);
+            paymentService.createPayment(user, amount);
             return ResponseEntity.status(200).body(ApiResponse.success(200, "Thanh toán thành công",u));
         }else{
             return ResponseEntity.status(400).body(ApiResponse.error(400, "Thanh toán thất bại", "Bad Request"));

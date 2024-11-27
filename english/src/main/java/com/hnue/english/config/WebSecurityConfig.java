@@ -37,6 +37,7 @@ public class WebSecurityConfig {
                 })
                 .csrf(AbstractHttpConfigurer::disable)
         ;
+
         http.cors(new Customizer<CorsConfigurer<HttpSecurity>>() {
             @Override
             public void customize(CorsConfigurer<HttpSecurity> httpSecurityCorsConfigurer) {

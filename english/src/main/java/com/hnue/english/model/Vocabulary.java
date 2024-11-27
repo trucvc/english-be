@@ -13,7 +13,6 @@ import java.util.List;
 @Table(name = "vocabulary")
 @Data
 public class Vocabulary {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "vocab_id")
@@ -49,13 +48,6 @@ public class Vocabulary {
     @OneToMany(mappedBy = "vocabulary", cascade = CascadeType.ALL)
     private List<UserProgress> userProgresses;
 
-    @JsonBackReference
-    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-    @JoinTable(name = "folder_vocabulary",
-                joinColumns = @JoinColumn(name = "vocab_id"),
-                inverseJoinColumns = @JoinColumn(name = "folder_id"))
-    private List<Folder> folders;
-
     public Vocabulary(){
 
     }
@@ -73,12 +65,5 @@ public class Vocabulary {
         }
         userProgresses.add(theUserProgress);
         theUserProgress.setVocabulary(this);
-    }
-
-    public void addFolder(Folder theFolder){
-        if (folders == null){
-            folders = new ArrayList<>();
-        }
-        folders.add(theFolder);
     }
 }

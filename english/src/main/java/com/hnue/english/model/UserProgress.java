@@ -11,14 +11,10 @@ import java.util.Date;
 @Table(name = "user_progress")
 @Data
 public class UserProgress {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "progress_id")
     private int id;
-
-    @Column(name = "review_interval")
-    private int reviewInterval;
 
     @Column(name = "last_reviewed")
     private Date lastReviewed;
@@ -43,8 +39,7 @@ public class UserProgress {
 
     }
 
-    public UserProgress(int reviewInterval, Date lastReviewed, Date nextReview) {
-        this.reviewInterval = reviewInterval;
+    public UserProgress(Date lastReviewed, Date nextReview) {
         this.lastReviewed = lastReviewed;
         this.nextReview = nextReview;
     }

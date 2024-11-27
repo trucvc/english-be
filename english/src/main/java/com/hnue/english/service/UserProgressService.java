@@ -32,7 +32,6 @@ public class UserProgressService {
             calendar.add(Calendar.HOUR, 1);
             UserProgress u = new UserProgress();
             u.setLastReviewed(new Date());
-            u.setReviewInterval(1);
             u.setNextReview(calendar.getTime());
             u.setLevel(1);
             u.setUser(user);

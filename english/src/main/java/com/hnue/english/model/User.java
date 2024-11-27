@@ -2,7 +2,6 @@ package com.hnue.english.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
@@ -18,7 +17,6 @@ import java.util.List;
 @Table(name = "user")
 @Data
 public class User implements UserDetails{
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
@@ -66,13 +64,9 @@ public class User implements UserDetails{
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<TopicProgress> topicProgresses;
 
-    @JsonBackReference
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Folder> folders;
-
     @JsonIgnore
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private Subscription subscription;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Payment> payments;
 
     @JsonBackReference
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
@@ -147,14 +141,6 @@ public class User implements UserDetails{
         }
         topicProgresses.add(theTopicProgress);
         theTopicProgress.setUser(this);
-    }
-
-    public void addFolder(Folder theFolder){
-        if (folders == null){
-            folders = new ArrayList<>();
-        }
-        folders.add(theFolder);
-        theFolder.setUser(this);
     }
 
     public void addFormSubmission(FormSubmission theFormSubmission){
