@@ -341,11 +341,17 @@ public class UserService {
 
     public Map<Integer, Long> countUsersByMonthCurrentYear() {
         List<Object[]> results = userRepository.countUsersByMonthCurrentYear();
-        return results.stream()
+        Map<Integer, Long> monthUserCount = results.stream()
                 .collect(Collectors.toMap(
                         result -> (Integer) result[0],
                         result -> (Long) result[1]
                 ));
+
+        for (int month = 1; month <= 12; month++) {
+            monthUserCount.putIfAbsent(month, 0L);
+        }
+
+        return monthUserCount;
     }
 
     public List<User> getUsersWithExpiringSubscriptions(){
