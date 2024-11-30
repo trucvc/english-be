@@ -198,10 +198,14 @@ public class UserService {
     public User payment(User user){
         Calendar calendar = Calendar.getInstance();
         user.setSubscriptionStartDate(new Date());
-        if (user.getSubscriptionEndDate().after(new Date())){
-            calendar.setTime(user.getSubscriptionEndDate());
-        }else {
+        if (user.getSubscriptionEndDate() == null){
             calendar.setTime(new Date());
+        }else {
+            if (user.getSubscriptionEndDate().after(new Date())){
+                calendar.setTime(user.getSubscriptionEndDate());
+            }else {
+                calendar.setTime(new Date());
+            }
         }
         if (user.getSubscriptionPlan().equals("6_months")){
             calendar.add(Calendar.MONTH, 6);
