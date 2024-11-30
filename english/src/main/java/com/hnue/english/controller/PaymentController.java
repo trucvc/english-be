@@ -35,7 +35,7 @@ public class PaymentController {
             double amount = Double.parseDouble(request.getParameter("vnp_Amount"))/100;
             if (amount == 299000 || amount == 499000){
                 user.setSubscriptionPlan("6_months");
-            } else if (amount == 599000 || amount == 899000) {
+            } else if (amount == 699000 || amount == 899000) {
                 user.setSubscriptionPlan("1_year");
             }else {
                 user.setSubscriptionPlan("3_years");
