@@ -197,20 +197,20 @@ public class UserService {
 
     public User payment(User user){
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
+        user.setSubscriptionStartDate(new Date());
+        if (user.getSubscriptionEndDate().after(new Date())){
+            calendar.setTime(user.getSubscriptionEndDate());
+        }else {
+            calendar.setTime(new Date());
+        }
         if (user.getSubscriptionPlan().equals("6_months")){
             calendar.add(Calendar.MONTH, 6);
-            user.setSubscriptionStartDate(new Date());
-            user.setSubscriptionEndDate(calendar.getTime());
         } else if (user.getSubscriptionPlan().equals("1_year")) {
             calendar.add(Calendar.YEAR, 1);
-            user.setSubscriptionStartDate(new Date());
-            user.setSubscriptionEndDate(calendar.getTime());
         }else {
             calendar.add(Calendar.YEAR, 3);
-            user.setSubscriptionStartDate(new Date());
-            user.setSubscriptionEndDate(calendar.getTime());
         }
+        user.setSubscriptionEndDate(calendar.getTime());
         user.setPaid(1);
         user.setUpdatedAt(new Date());
         return userRepository.save(user);

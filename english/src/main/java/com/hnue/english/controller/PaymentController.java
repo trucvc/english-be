@@ -22,10 +22,7 @@ public class PaymentController {
 
     @GetMapping("/pay")
     public ResponseEntity<ApiResponse<?>> pay(HttpServletRequest request){
-        String authHeader = request.getHeader("Authorization");
-        String token = authHeader.substring(7);
-        User user = userService.fetch(token);
-        return ResponseEntity.status(200).body(ApiResponse.success(200, "", vnpayService.createPaymentUrl(request, user.getPaid())));
+        return ResponseEntity.status(200).body(ApiResponse.success(200, "", vnpayService.createPaymentUrl(request)));
     }
 
     @GetMapping("/callback")
@@ -36,10 +33,9 @@ public class PaymentController {
             String token = authHeader.substring(7);
             User user = userService.fetch(token);
             double amount = Double.parseDouble(request.getParameter("vnp_Amount"))/100;
-            double amountNoDis = amount / 80 * 100;
-            if (amount == 399000 || amountNoDis == 399000){
+            if (amount == 299000 || amount == 499000){
                 user.setSubscriptionPlan("6_months");
-            } else if (amount == 699000 || amountNoDis == 699000) {
+            } else if (amount == 599000 || amount == 899000) {
                 user.setSubscriptionPlan("1_year");
             }else {
                 user.setSubscriptionPlan("3_years");
